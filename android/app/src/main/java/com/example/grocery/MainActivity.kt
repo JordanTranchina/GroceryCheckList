@@ -9,35 +9,21 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import com.example.grocery.data.GroceryRepository
+import com.example.grocery.ui.GroceryListScreen
 import com.example.grocery.ui.theme.GroceryListTheme
 
 class MainActivity : ComponentActivity() {
+    private val repository = GroceryRepository() // In a real app, use Hilt/Koin injection
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             GroceryListTheme {
-                // A surface container using the 'background' color from the theme
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    Greeting("Android")
+                    GroceryListScreen(repository = repository)
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    GroceryListTheme {
-        Greeting("Android")
     }
 }
