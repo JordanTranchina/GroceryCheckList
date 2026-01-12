@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 import SwiftUI
 
 // Mock Repository Pattern for now until simulated Firebase

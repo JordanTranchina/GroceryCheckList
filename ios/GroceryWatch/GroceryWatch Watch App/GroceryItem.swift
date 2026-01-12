@@ -3,7 +3,7 @@ import Foundation
 struct GroceryItem: Identifiable, Codable {
     let id: String
     var name: String
-    var isCompleted: BooleanLiteralType
+    var isCompleted: Bool
     var order: Int
     var createdAt: Date
     
