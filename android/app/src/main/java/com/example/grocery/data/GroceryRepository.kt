@@ -1,45 +1,56 @@
 package com.example.grocery.data
 
+import android.util.Log
 import com.example.grocery.model.GroceryItem
-
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import java.util.Date
-import java.util.UUID
 
-// Mock Repository until Firebase is connected
 class GroceryRepository {
-    private val _items = MutableStateFlow<List<GroceryItem>>(emptyList())
-    val items: StateFlow<List<GroceryItem>> = _items.asStateFlow()
+    private val db = FirebaseFirestore.getInstance()
+    private val collection = db.collection("groceries")
 
-    init {
-        // Seed mock data
-        _items.value = listOf(
-            GroceryItem(id = UUID.randomUUID().toString(), name = "Milk", order = 0),
-            GroceryItem(id = UUID.randomUUID().toString(), name = "Eggs", order = 1),
-            GroceryItem(id = UUID.randomUUID().toString(), name = "Coffee", order = 2),
-            GroceryItem(id = UUID.randomUUID().toString(), name = "Apples", isCompleted = true, order = 3)
-        )
+    val items: Flow<List<GroceryItem>> = callbackFlow {
+        val listener = collection
+            .orderBy("order", Query.Direction.ASCENDING)
+            .addSnapshotListener { snapshot, e ->
+                if (e != null) {
+                    Log.w("GroceryRepository", "Listen failed.", e)
+                    close(e)
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null) {
+                    val items = snapshot.toObjects(GroceryItem::class.java)
+                    trySend(items)
+                }
+            }
+        awaitClose { listener.remove() }
     }
 
     fun addItem(name: String) {
-        val currentList = _items.value.toMutableList()
+        // Simple default ordering: use current timestamp (seconds) to keep it near end
+        val newOrder = (System.currentTimeMillis() / 1000).toInt()
         val newItem = GroceryItem(
-            id = UUID.randomUUID().toString(),
             name = name,
-            order = currentList.size // Append to end
+            isCompleted = false,
+            order = newOrder,
+            createdAt = Date()
         )
-        currentList.add(newItem)
-        _items.value = currentList
+        collection.add(newItem)
     }
 
     fun toggleCompletion(item: GroceryItem) {
-        val currentList = _items.value.toMutableList()
-        val index = currentList.indexOfFirst { it.id == item.id }
-        if (index != -1) {
-            currentList[index] = item.copy(isCompleted = !item.isCompleted)
-            _items.value = currentList
+        Log.d("GroceryRepository", "Toggling item: ${item.id} current status: ${item.isCompleted}")
+        if (item.id.isNotEmpty()) {
+            collection.document(item.id).update("isCompleted", !item.isCompleted)
+                .addOnSuccessListener { Log.d("GroceryRepository", "Update successful") }
+                .addOnFailureListener { e -> Log.e("GroceryRepository", "Update failed", e) }
+        } else {
+            Log.e("GroceryRepository", "Cannot toggle item with empty ID")
         }
     }
 }

@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		EB74E2E42F12F4A5000ABCCF /* GroceryWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = EB74E2E32F12F4A5000ABCCF /* GroceryWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		EBABBFFD2F15F0A4002DCA41 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = EBABBFFC2F15F0A4002DCA41 /* FirebaseAnalytics */; };
+		EBABBFFF2F15F0A4002DCA41 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = EBABBFFE2F15F0A4002DCA41 /* FirebaseFirestore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -52,6 +54,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EBABBFFD2F15F0A4002DCA41 /* FirebaseAnalytics in Frameworks */,
+				EBABBFFF2F15F0A4002DCA41 /* FirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -114,6 +118,8 @@
 			);
 			name = "GroceryWatch Watch App";
 			packageProductDependencies = (
+				EBABBFFC2F15F0A4002DCA41 /* FirebaseAnalytics */,
+				EBABBFFE2F15F0A4002DCA41 /* FirebaseFirestore */,
 			);
 			productName = "GroceryWatch Watch App";
 			productReference = EB74E2E32F12F4A5000ABCCF /* GroceryWatch Watch App.app */;
@@ -146,6 +152,9 @@
 			);
 			mainGroup = EB74E2D62F12F4A5000ABCCF;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				EBABBFFB2F15F0A4002DCA41 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = EB74E2DE2F12F4A5000ABCCF /* Products */;
 			projectDirPath = "";
@@ -446,6 +455,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		EBABBFFB2F15F0A4002DCA41 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.7.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		EBABBFFC2F15F0A4002DCA41 /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EBABBFFB2F15F0A4002DCA41 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		EBABBFFE2F15F0A4002DCA41 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EBABBFFB2F15F0A4002DCA41 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = EB74E2D72F12F4A5000ABCCF /* Project object */;
 }

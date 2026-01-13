@@ -40,7 +40,7 @@ fun GroceryListScreen(
     repository: GroceryRepository,
     modifier: Modifier = Modifier
 ) {
-    val items by repository.items.collectAsState()
+    val items by repository.items.collectAsState(initial = emptyList())
     var showDialog by remember { mutableStateOf(false) }
     var newItemName by remember { mutableStateOf("") }
     
