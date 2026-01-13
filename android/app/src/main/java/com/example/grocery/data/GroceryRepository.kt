@@ -69,4 +69,17 @@ class GroceryRepository {
                 .addOnFailureListener { e -> Log.e("GroceryRepository", "Name update failed", e) }
         }
     }
+
+    fun updateOrders(items: List<GroceryItem>) {
+        val batch = db.batch()
+        items.forEachIndexed { index, item ->
+            if (item.id.isNotEmpty()) {
+                val ref = collection.document(item.id)
+                batch.update(ref, "order", index)
+            }
+        }
+        batch.commit()
+            .addOnSuccessListener { Log.d("GroceryRepository", "Batch order update successful") }
+            .addOnFailureListener { e -> Log.e("GroceryRepository", "Batch order update failed", e) }
+    }
 }

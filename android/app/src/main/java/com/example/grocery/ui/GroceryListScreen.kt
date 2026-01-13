@@ -51,6 +51,10 @@ import androidx.compose.ui.unit.dp
 import com.example.grocery.R
 import com.example.grocery.data.GroceryRepository
 import com.example.grocery.model.GroceryItem
+import org.burnoutcrew.reorderable.ReorderableItem
+import org.burnoutcrew.reorderable.detectReorderAfterLongPress
+import org.burnoutcrew.reorderable.rememberReorderableLazyListState
+import org.burnoutcrew.reorderable.reorderable
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -62,7 +66,31 @@ fun GroceryListScreen(
     var newItemName by remember { mutableStateOf("") }
     
     // Sort: Unchecked first (by order), then Checked
-    val activeItems = items.filter { !it.isCompleted }.sortedBy { it.order }
+    var activeItems by remember { mutableStateOf<List<GroceryItem>>(emptyList()) }
+    
+    val currentItems = items.filter { !it.isCompleted }.sortedBy { it.order }
+    
+    androidx.compose.runtime.LaunchedEffect(currentItems) {
+        activeItems = currentItems
+    }
+
+    val state = rememberReorderableLazyListState(
+        onMove = { from, to ->
+            // FIX: Ensure we stay within bounds of activeItems
+            val fromIndex = from.index
+            val toIndex = to.index
+            
+            if (fromIndex in activeItems.indices && toIndex in activeItems.indices) {
+                activeItems = activeItems.toMutableList().apply {
+                    add(toIndex, removeAt(fromIndex))
+                }
+            }
+        },
+        onDragEnd = { _, _ ->
+            repository.updateOrders(activeItems)
+        }
+    )
+
     val completedItems = items.filter { it.isCompleted }.sortedBy { it.order }
     
     var isCompletedExpanded by remember { mutableStateOf(true) }
@@ -97,31 +125,37 @@ fun GroceryListScreen(
         }
     ) { innerPadding ->
         LazyColumn(
+            state = state.listState,
             modifier = modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                // Clear selection if clicking on empty space (simplified)
                 .clickable(
                     interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
                     indication = null
                 ) { selectedItemId = null }
+                .reorderable(state)
         ) {
             // Active Items Section
             items(activeItems, key = { it.id }) { item ->
-                GroceryItemRow(
-                    item = item,
-                    onToggle = { repository.toggleCompletion(it) },
-                    onDelete = { 
-                        repository.deleteItem(it)
-                        if (selectedItemId == it.id) selectedItemId = null
-                    },
-                    onNameChange = { item, newName -> 
-                        repository.updateName(item, newName)
-                    },
-                    isSelected = item.id == selectedItemId,
-                    onSelect = { selectedItemId = item.id },
-                    modifier = Modifier.animateItemPlacement()
-                )
+                ReorderableItem(state, key = item.id) { isDragging ->
+                    GroceryItemRow(
+                        item = item,
+                        onToggle = { repository.toggleCompletion(it) },
+                        onDelete = { 
+                            repository.deleteItem(it)
+                            if (selectedItemId == it.id) selectedItemId = null
+                        },
+                        onNameChange = { item, newName -> 
+                            repository.updateName(item, newName)
+                        },
+                        isSelected = item.id == selectedItemId,
+                        onSelect = { selectedItemId = item.id },
+                        modifier = Modifier
+                            .animateItemPlacement()
+                            .padding(vertical = if(isDragging) 4.dp else 0.dp), // add minimal spacing during drag
+                        dragModifier = Modifier.detectReorderAfterLongPress(state)
+                    )
+                }
             }
 
             // Inline Input Row
@@ -130,7 +164,7 @@ fun GroceryListScreen(
                     text = newItemName,
                     onTextChange = { newItemName = it },
                     onAdd = {
-                        if (newItemName.isNotBlank()) {
+                        if (newItemName.isNotEmpty()) {
                             repository.addItem(newItemName)
                             newItemName = ""
                         }
@@ -234,9 +268,4 @@ fun InputRow(
             modifier = Modifier.weight(1f)
         )
     }
-}
-
-@Composable
-fun SectionHeader(title: String) {
-   // Deprecated or Unused for now
 }

@@ -57,6 +57,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
+    implementation("org.burnoutcrew.composereorderable:reorderable:0.9.6")
     
     // Firebase
     implementation(platform("com.google.firebase:firebase-bom:32.7.0"))

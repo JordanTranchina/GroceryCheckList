@@ -30,7 +30,8 @@ fun GroceryItemRow(
     onNameChange: (GroceryItem, String) -> Unit,
     isSelected: Boolean,
     onSelect: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    dragModifier: Modifier = Modifier
 ) {
     Row(
         modifier = modifier
@@ -39,12 +40,12 @@ fun GroceryItemRow(
             .padding(vertical = 12.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Drag Handle (Visual only for now - using Menu as fallback for DragIndicator)
+        // Drag Handle
         Icon(
             imageVector = Icons.Default.Menu, 
             contentDescription = "Drag Handle",
             tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
-            modifier = Modifier.padding(start = 8.dp, end = 8.dp)
+            modifier = dragModifier.padding(start = 8.dp, end = 8.dp)
         )
 
         Checkbox(
