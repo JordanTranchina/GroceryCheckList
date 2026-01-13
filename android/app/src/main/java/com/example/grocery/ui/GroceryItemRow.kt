@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
@@ -25,12 +26,16 @@ import com.example.grocery.model.GroceryItem
 fun GroceryItemRow(
     item: GroceryItem,
     onToggle: (GroceryItem) -> Unit,
+    onDelete: (GroceryItem) -> Unit,
+    onNameChange: (GroceryItem, String) -> Unit,
+    isSelected: Boolean,
+    onSelect: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clickable { onToggle(item) }
+            .clickable { onSelect() }
             .padding(vertical = 12.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -52,17 +57,39 @@ fun GroceryItemRow(
             )
         )
         
-        Text(
-            text = item.name,
-            style = MaterialTheme.typography.bodyLarge.copy(
-                fontSize = 16.sp
+        // Editable text field (BasicTextField)
+        androidx.compose.foundation.text.BasicTextField(
+            value = item.name,
+            onValueChange = { onNameChange(item, it) },
+            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                fontSize = 16.sp,
+                textDecoration = if (item.isCompleted) TextDecoration.LineThrough else null,
+                color = if (item.isCompleted) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) 
+                       else MaterialTheme.colorScheme.onSurface
             ),
-            textDecoration = if (item.isCompleted) TextDecoration.LineThrough else null,
-            color = if (item.isCompleted) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) 
-                   else MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            decorationBox = { innerTextField ->
+                 if (item.name.isEmpty()) {
+                     Text(
+                         text = "List item",
+                         style = MaterialTheme.typography.bodyLarge.copy(
+                             fontSize = 16.sp,
+                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                         )
+                     )
+                 }
+                 innerTextField()
+            }
         )
-        
-        // Removed Spacer and right-padding to match Keep's dense look
+
+        if (isSelected) {
+            androidx.compose.material3.IconButton(onClick = { onDelete(item) }) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Delete Item",
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
+        }
     }
 }

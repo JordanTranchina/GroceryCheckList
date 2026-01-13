@@ -66,6 +66,7 @@ fun GroceryListScreen(
     val completedItems = items.filter { it.isCompleted }.sortedBy { it.order }
     
     var isCompletedExpanded by remember { mutableStateOf(true) }
+    var selectedItemId by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
         topBar = {
@@ -99,12 +100,26 @@ fun GroceryListScreen(
             modifier = modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                // Clear selection if clicking on empty space (simplified)
+                .clickable(
+                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                    indication = null
+                ) { selectedItemId = null }
         ) {
             // Active Items Section
             items(activeItems, key = { it.id }) { item ->
                 GroceryItemRow(
                     item = item,
                     onToggle = { repository.toggleCompletion(it) },
+                    onDelete = { 
+                        repository.deleteItem(it)
+                        if (selectedItemId == it.id) selectedItemId = null
+                    },
+                    onNameChange = { item, newName -> 
+                        repository.updateName(item, newName)
+                    },
+                    isSelected = item.id == selectedItemId,
+                    onSelect = { selectedItemId = item.id },
                     modifier = Modifier.animateItemPlacement()
                 )
             }
@@ -160,6 +175,15 @@ fun GroceryListScreen(
                          GroceryItemRow(
                             item = item,
                             onToggle = { repository.toggleCompletion(it) },
+                            onDelete = { 
+                                repository.deleteItem(it)
+                                if (selectedItemId == it.id) selectedItemId = null
+                            },
+                            onNameChange = { item, newName -> 
+                                repository.updateName(item, newName)
+                            },
+                            isSelected = item.id == selectedItemId,
+                            onSelect = { selectedItemId = item.id },
                             modifier = Modifier.animateItemPlacement()
                         )
                     }

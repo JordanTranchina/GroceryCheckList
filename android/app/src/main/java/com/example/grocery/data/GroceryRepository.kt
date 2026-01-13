@@ -53,4 +53,20 @@ class GroceryRepository {
             Log.e("GroceryRepository", "Cannot toggle item with empty ID")
         }
     }
+
+    fun deleteItem(item: GroceryItem) {
+        if (item.id.isNotEmpty()) {
+            collection.document(item.id).delete()
+                .addOnSuccessListener { Log.d("GroceryRepository", "Delete successful") }
+                .addOnFailureListener { e -> Log.e("GroceryRepository", "Delete failed", e) }
+        }
+    }
+
+    fun updateName(item: GroceryItem, newName: String) {
+        if (item.id.isNotEmpty()) {
+            collection.document(item.id).update("name", newName)
+                .addOnSuccessListener { Log.d("GroceryRepository", "Name update successful") }
+                .addOnFailureListener { e -> Log.e("GroceryRepository", "Name update failed", e) }
+        }
+    }
 }
