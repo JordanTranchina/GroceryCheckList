@@ -22,6 +22,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.MoreVert
@@ -48,6 +50,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.DismissDirection
+import androidx.compose.material3.DismissValue
+import androidx.compose.material3.SwipeToDismiss
+import androidx.compose.material3.rememberDismissState
+import androidx.compose.foundation.background
 import com.example.grocery.R
 import com.example.grocery.data.GroceryRepository
 import com.example.grocery.model.GroceryItem
@@ -63,6 +70,7 @@ fun GroceryListScreen(
     modifier: Modifier = Modifier
 ) {
     val items by repository.items.collectAsState(initial = emptyList())
+    // ... existing variable declarations ...
     var newItemName by remember { mutableStateOf("") }
     
     // Sort: Unchecked first (by order), then Checked
@@ -134,25 +142,87 @@ fun GroceryListScreen(
             // Active Items Section
             items(activeItems, key = { it.id }) { item ->
                 ReorderableItem(state, key = item.id) { isDragging ->
-                    GroceryItemRow(
-                        item = item,
-                        onToggle = { repository.toggleCompletion(it) },
-                        onDelete = { 
-                            repository.deleteItem(it)
-                            activeItems = activeItems.filter { item -> item.id != it.id }
-                            if (selectedItemId == it.id) selectedItemId = null
+                    val dismissState = rememberDismissState(
+                        confirmValueChange = { dismissValue ->
+                            when (dismissValue) {
+                                DismissValue.DismissedToEnd -> {
+                                    // Swipe Right -> Toggle Completion (Mark as Done)
+                                    repository.toggleCompletion(item)
+                                    // Optimistic update: remove from active list instantly
+                                    activeItems = activeItems.filter { it.id != item.id }
+                                    if (selectedItemId == item.id) selectedItemId = null
+                                    true
+                                }
+                                DismissValue.DismissedToStart -> {
+                                    // Swipe Left -> Delete
+                                    repository.deleteItem(item)
+                                    activeItems = activeItems.filter { it.id != item.id }
+                                    if (selectedItemId == item.id) selectedItemId = null
+                                    true
+                                }
+                                else -> false
+                            }
+                        }
+                    )
+
+                    SwipeToDismiss(
+                        state = dismissState,
+                        directions = setOf(DismissDirection.StartToEnd, DismissDirection.EndToStart),
+                        background = {
+                            val color = when (dismissState.dismissDirection) {
+                                DismissDirection.StartToEnd -> Color(0xFF4CAF50) // Green
+                                DismissDirection.EndToStart -> Color(0xFFE53935) // Red
+                                else -> Color.Transparent
+                            }
+                            val alignment = when (dismissState.dismissDirection) {
+                                DismissDirection.StartToEnd -> Alignment.CenterStart
+                                DismissDirection.EndToStart -> Alignment.CenterEnd
+                                else -> Alignment.Center
+                            }
+                            val icon = when (dismissState.dismissDirection) {
+                                DismissDirection.StartToEnd -> Icons.Default.Check
+                                DismissDirection.EndToStart -> Icons.Default.Close // Or Delete icon
+                                else -> null
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(color)
+                                    .padding(horizontal = 20.dp),
+                                contentAlignment = alignment
+                            ) {
+                                if (icon != null) {
+                                    Icon(
+                                        imageVector = icon,
+                                        contentDescription = "Action",
+                                        tint = Color.White
+                                    )
+                                }
+                            }
                         },
-                        onNameChange = { item, newName -> 
-                            repository.updateName(item, newName)
-                        },
-                        isSelected = item.id == selectedItemId,
-                        onSelect = { 
-                            selectedItemId = if (selectedItemId == item.id) null else item.id 
-                        },
-                        modifier = Modifier
-                            .animateItemPlacement()
-                            .padding(vertical = if(isDragging) 4.dp else 0.dp), // add minimal spacing during drag
-                        dragModifier = Modifier.detectReorderAfterLongPress(state)
+                        dismissContent = {
+                             GroceryItemRow(
+                                item = item,
+                                onToggle = { repository.toggleCompletion(it) },
+                                onDelete = { 
+                                    repository.deleteItem(it)
+                                    activeItems = activeItems.filter { i -> i.id != it.id }
+                                    if (selectedItemId == it.id) selectedItemId = null
+                                },
+                                onNameChange = { item, newName -> 
+                                    repository.updateName(item, newName)
+                                },
+                                isSelected = item.id == selectedItemId,
+                                onSelect = { 
+                                    selectedItemId = if (selectedItemId == item.id) null else item.id 
+                                },
+                                modifier = Modifier
+                                    .animateItemPlacement()
+                                    .padding(vertical = if(isDragging) 4.dp else 0.dp), // add minimal spacing during drag
+                                dragModifier = Modifier.detectReorderAfterLongPress(state)
+                            )
+                        }
                     )
                 }
             }
