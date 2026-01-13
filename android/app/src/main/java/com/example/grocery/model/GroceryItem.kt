@@ -1,13 +1,20 @@
 package com.example.grocery.model
 
 import com.google.firebase.firestore.DocumentId
+import com.google.firebase.firestore.PropertyName
 import java.util.Date
 
 data class GroceryItem(
-    @DocumentId
-    val id: String = "",
-    val name: String = "",
-    val isCompleted: Boolean = false,
-    val order: Int = 0,
-    val createdAt: Date = Date()
+    @get:DocumentId
+    var id: String = "",
+    
+    var name: String = "",
+    
+    @get:PropertyName("isCompleted")
+    @set:PropertyName("isCompleted")
+    var isCompleted: Boolean = false,
+    
+    var order: Int = 0,
+    
+    var createdAt: Date = Date()
 )
