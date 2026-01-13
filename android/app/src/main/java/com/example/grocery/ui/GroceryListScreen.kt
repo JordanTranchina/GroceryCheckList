@@ -129,10 +129,6 @@ fun GroceryListScreen(
             modifier = modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .clickable(
-                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                    indication = null
-                ) { selectedItemId = null }
                 .reorderable(state)
         ) {
             // Active Items Section
@@ -143,13 +139,16 @@ fun GroceryListScreen(
                         onToggle = { repository.toggleCompletion(it) },
                         onDelete = { 
                             repository.deleteItem(it)
+                            activeItems = activeItems.filter { item -> item.id != it.id }
                             if (selectedItemId == it.id) selectedItemId = null
                         },
                         onNameChange = { item, newName -> 
                             repository.updateName(item, newName)
                         },
                         isSelected = item.id == selectedItemId,
-                        onSelect = { selectedItemId = item.id },
+                        onSelect = { 
+                            selectedItemId = if (selectedItemId == item.id) null else item.id 
+                        },
                         modifier = Modifier
                             .animateItemPlacement()
                             .padding(vertical = if(isDragging) 4.dp else 0.dp), // add minimal spacing during drag
