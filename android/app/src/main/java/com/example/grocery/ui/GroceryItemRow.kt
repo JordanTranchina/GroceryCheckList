@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -17,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.grocery.model.GroceryItem
 
 @Composable
@@ -29,22 +31,38 @@ fun GroceryItemRow(
         modifier = modifier
             .fillMaxWidth()
             .clickable { onToggle(item) }
-            .padding(16.dp),
+            .padding(vertical = 12.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // Drag Handle (Visual only for now - using Menu as fallback for DragIndicator)
+        Icon(
+            imageVector = Icons.Default.Menu, 
+            contentDescription = "Drag Handle",
+            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+            modifier = Modifier.padding(start = 8.dp, end = 8.dp)
+        )
+
         Checkbox(
             checked = item.isCompleted,
-            onCheckedChange = { onToggle(item) }
+            onCheckedChange = { onToggle(item) },
+            colors = androidx.compose.material3.CheckboxDefaults.colors(
+                checkedColor = MaterialTheme.colorScheme.secondary,
+                uncheckedColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                checkmarkColor = MaterialTheme.colorScheme.surface
+            )
         )
-        
-        Spacer(modifier = Modifier.width(16.dp))
         
         Text(
             text = item.name,
-            style = MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.bodyLarge.copy(
+                fontSize = 16.sp
+            ),
             textDecoration = if (item.isCompleted) TextDecoration.LineThrough else null,
             color = if (item.isCompleted) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) 
-                   else MaterialTheme.colorScheme.onSurface
+                   else MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f)
         )
+        
+        // Removed Spacer and right-padding to match Keep's dense look
     }
 }

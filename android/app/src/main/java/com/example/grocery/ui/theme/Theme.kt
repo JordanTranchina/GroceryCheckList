@@ -10,24 +10,49 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
+// Google Keep-like Light Colors
+private val KeepWhite = Color(0xFFFFFFFF)
+private val KeepBackground = Color(0xFFFFFFFF) // Main background
+private val KeepSurface = Color(0xFFFFFFFF)
+private val KeepOnSurface = Color(0xFF202124) // Text color
+private val KeepSecondary = Color(0xFF5F6368) // Secondary text/icons
+
+// Google Keep-like Dark Colors (Approximate)
+private val KeepDarkBackground = Color(0xFF202124)
+private val KeepDarkSurface = Color(0xFF525355) // Card/Surface color
+private val KeepDarkOnSurface = Color(0xFFE8EAED)
+
 private val DarkColorScheme = darkColorScheme(
-    // Add custom colors here later
+    primary = KeepDarkOnSurface,
+    background = KeepDarkBackground,
+    surface = KeepDarkBackground,
+    onPrimary = KeepDarkBackground,
+    onBackground = KeepDarkOnSurface,
+    onSurface = KeepDarkOnSurface,
 )
 
 private val LightColorScheme = lightColorScheme(
-    // Add custom colors here later
+    primary = KeepOnSurface,
+    background = KeepBackground,
+    surface = KeepSurface,
+    onPrimary = KeepWhite,
+    onBackground = KeepOnSurface,
+    onSurface = KeepOnSurface,
+    primaryContainer = KeepBackground,
+    onPrimaryContainer = KeepOnSurface
 )
 
 @Composable
 fun GroceryListTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    // Disable dynamic color to enforce our Keep-like aesthetic
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -42,8 +67,8 @@ fun GroceryListTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.primary.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = darkTheme
+            window.statusBarColor = colorScheme.background.toArgb()
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
         }
     }
 
