@@ -20,6 +20,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import com.example.grocery.model.GroceryItem
 
 @Composable
@@ -30,9 +48,15 @@ fun GroceryItemRow(
     onNameChange: (GroceryItem, String) -> Unit,
     isSelected: Boolean,
     onSelect: () -> Unit,
+    onAddNext: () -> Unit = {},
+    focusRequester: FocusRequester? = null,
     modifier: Modifier = Modifier,
     dragModifier: Modifier = Modifier
 ) {
+    val scope = rememberCoroutineScope()
+    // Local state for immediate visual feedback
+    var isChecked by remember(item.isCompleted) { mutableStateOf(item.isCompleted) }
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -49,8 +73,15 @@ fun GroceryItemRow(
         )
 
         Checkbox(
-            checked = item.isCompleted,
-            onCheckedChange = { onToggle(item) },
+            checked = isChecked,
+            onCheckedChange = { checked ->
+                isChecked = checked
+                // Delay the actual list move/database update
+                scope.launch {
+                    delay(300) 
+                    onToggle(item)
+                }
+            },
             colors = androidx.compose.material3.CheckboxDefaults.colors(
                 checkedColor = MaterialTheme.colorScheme.secondary,
                 uncheckedColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
@@ -64,11 +95,28 @@ fun GroceryItemRow(
             onValueChange = { onNameChange(item, it) },
             textStyle = MaterialTheme.typography.bodyLarge.copy(
                 fontSize = 16.sp,
-                textDecoration = if (item.isCompleted) TextDecoration.LineThrough else null,
-                color = if (item.isCompleted) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) 
+                textDecoration = if (isChecked) TextDecoration.LineThrough else null,
+                color = if (isChecked) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) 
                        else MaterialTheme.colorScheme.onSurface
             ),
-            modifier = Modifier.weight(1f),
+            keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.Sentences,
+                imeAction = ImeAction.Next
+            ),
+            keyboardActions = KeyboardActions(
+                onNext = { onAddNext() } 
+            ),
+            modifier = Modifier
+                .weight(1f)
+                .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
+                .onKeyEvent { event ->
+                    if (event.key == Key.Enter && event.type == KeyEventType.KeyUp) {
+                        onAddNext()
+                        true
+                    } else {
+                        false
+                    }
+                },
             decorationBox = { innerTextField ->
                  if (item.name.isEmpty()) {
                      Text(
