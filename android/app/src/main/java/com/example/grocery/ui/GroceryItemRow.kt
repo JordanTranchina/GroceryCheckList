@@ -76,11 +76,7 @@ fun GroceryItemRow(
             checked = isChecked,
             onCheckedChange = { checked ->
                 isChecked = checked
-                // Delay the actual list move/database update
-                scope.launch {
-                    delay(300) 
-                    onToggle(item)
-                }
+                onToggle(item)
             },
             colors = androidx.compose.material3.CheckboxDefaults.colors(
                 checkedColor = MaterialTheme.colorScheme.secondary,
