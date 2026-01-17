@@ -17,8 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -33,8 +31,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -47,14 +43,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.DismissDirection
 import androidx.compose.material3.DismissValue
 import androidx.compose.material3.SwipeToDismiss
 import androidx.compose.material3.rememberDismissState
 import androidx.compose.foundation.background
+import androidx.compose.ui.focus.FocusRequester
 import com.example.grocery.R
 import com.example.grocery.data.GroceryRepository
 import com.example.grocery.model.GroceryItem
@@ -71,7 +66,8 @@ fun GroceryListScreen(
 ) {
     val items by repository.items.collectAsState(initial = emptyList())
     // ... existing variable declarations ...
-    var newItemName by remember { mutableStateOf("") }
+    // ... existing variable declarations ...
+
     
     // Sort: Unchecked first (by order), then Checked
     var activeItems by remember { mutableStateOf<List<GroceryItem>>(emptyList()) }
@@ -103,6 +99,8 @@ fun GroceryListScreen(
     
     var isCompletedExpanded by remember { mutableStateOf(true) }
     var selectedItemId by remember { mutableStateOf<String?>(null) }
+    var itemToFocus by remember { mutableStateOf<String?>(null) }
+
 
     Scaffold(
         topBar = {
@@ -202,6 +200,18 @@ fun GroceryListScreen(
                             }
                         },
                         dismissContent = {
+                            val focusRequester = remember { FocusRequester() }
+                            androidx.compose.runtime.LaunchedEffect(item.id, itemToFocus) {
+                                if (item.id == itemToFocus) {
+                                    focusRequester.requestFocus()
+                                    // Reset to avoid re-focusing unexpectedly? 
+                                    // Actually keeping it null is safer after consumption
+                                    // itemToFocus = null 
+                                    // Note: If we reset immediately, checks might fail if composition keeps happening.
+                                    // But since we key on item.id, this effect runs once.
+                                }
+                            }
+
                              GroceryItemRow(
                                 item = item,
                                 onToggle = { repository.toggleCompletion(it) },
@@ -217,6 +227,34 @@ fun GroceryListScreen(
                                 onSelect = { 
                                     selectedItemId = if (selectedItemId == item.id) null else item.id 
                                 },
+                                onAddNext = {
+                                    // Insert NEW item after this one
+                                    // 1. Calculate order
+                                    // For simplicity, just re-order list after insertion
+                                    val newItemId = repository.addItem("", order = item.order + 1)
+                                    
+                                    val newItem = GroceryItem(
+                                        id = newItemId,
+                                        name = "",
+                                        isCompleted = false,
+                                        order = item.order + 1,
+                                        java.util.Date()
+                                    )
+
+                                    // 2. Update local list immediately for UI
+                                    val currentIndex = activeItems.indexOfFirst { it.id == item.id }
+                                    if (currentIndex != -1) {
+                                        val mutable = activeItems.toMutableList()
+                                        mutable.add(currentIndex + 1, newItem)
+                                        activeItems = mutable
+                                        // 3. Persist order
+                                        repository.updateOrders(activeItems)
+                                    }
+                                    
+                                    // 4. Focus new item
+                                    itemToFocus = newItemId 
+                                },
+                                focusRequester = focusRequester,
                                 modifier = Modifier
                                     .animateItemPlacement()
                                     .padding(vertical = if(isDragging) 4.dp else 0.dp), // add minimal spacing during drag
@@ -227,16 +265,31 @@ fun GroceryListScreen(
                 }
             }
 
-            // Inline Input Row
+            // Ghost Input Row (Footer)
             item {
-                InputRow(
-                    text = newItemName,
-                    onTextChange = { newItemName = it },
-                    onAdd = {
-                        if (newItemName.isNotEmpty()) {
-                            repository.addItem(newItemName)
-                            newItemName = ""
-                        }
+                GhostInputRow(
+                    onClick = {
+                        // Create new empty item at the end of active list
+                        val maxOrder = activeItems.maxOfOrNull { it.order } ?: 0
+                        val newItemId = repository.addItem("", order = maxOrder + 1)
+                        
+                        val newItem = GroceryItem(
+                            id = newItemId,
+                            name = "",
+                            isCompleted = false,
+                            order = maxOrder + 1,
+                            java.util.Date()
+                        )
+                        
+                        // Update local list
+                        activeItems = activeItems + newItem
+                        
+                        // Focus it
+                        itemToFocus = newItemId
+                        
+                        // Scroll to it
+                        // Note: Scrolling handling might need LaunchedEffect with index, 
+                        // but reorderable state might handle it if we add to end.
                     }
                 )
             }
@@ -297,15 +350,14 @@ fun GroceryListScreen(
 }
 
 @Composable
-fun InputRow(
-    text: String,
-    onTextChange: (String) -> Unit,
-    onAdd: () -> Unit
+fun GhostInputRow(
+    onClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp, horizontal = 4.dp),
+            .clickable { onClick() }
+            .padding(vertical = 12.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Plus Icon aligned with Drag Handle/Checkbox area
@@ -316,23 +368,10 @@ fun InputRow(
             modifier = Modifier.padding(start = 16.dp, end = 24.dp) 
         )
 
-        TextField(
-            value = text,
-            onValueChange = onTextChange,
-            placeholder = { Text("List item") },
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color.Transparent,
-                unfocusedContainerColor = Color.Transparent,
-                focusedIndicatorColor = Color.Transparent, // No underline
-                unfocusedIndicatorColor = Color.Transparent,
-                disabledIndicatorColor = Color.Transparent
-            ),
-            keyboardOptions = KeyboardOptions(
-                capitalization = KeyboardCapitalization.Sentences,
-                imeAction = ImeAction.Done
-            ),
-            keyboardActions = KeyboardActions(
-                onDone = { onAdd() }
+        Text(
+            text = "List item",
+            style = MaterialTheme.typography.bodyLarge.copy(
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             ),
             modifier = Modifier.weight(1f)
         )

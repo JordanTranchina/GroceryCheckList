@@ -31,16 +31,18 @@ class GroceryRepository {
         awaitClose { listener.remove() }
     }
 
-    fun addItem(name: String) {
-        // Simple default ordering: use current timestamp (seconds) to keep it near end
-        val newOrder = (System.currentTimeMillis() / 1000).toInt()
+    fun addItem(name: String, order: Int? = null): String {
+        val newId = collection.document().id
+        val newOrder = order ?: (System.currentTimeMillis() / 1000).toInt()
         val newItem = GroceryItem(
+            id = newId,
             name = name,
             isCompleted = false,
             order = newOrder,
             createdAt = Date()
         )
-        collection.add(newItem)
+        collection.document(newId).set(newItem)
+        return newId
     }
 
     fun toggleCompletion(item: GroceryItem) {
