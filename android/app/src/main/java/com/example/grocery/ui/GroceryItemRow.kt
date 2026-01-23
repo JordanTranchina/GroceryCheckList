@@ -22,6 +22,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.grocery.model.GroceryItem
 
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.focus.onFocusChanged
+import kotlinx.coroutines.delay
+
 @Composable
 fun GroceryItemRow(
     item: GroceryItem,
@@ -58,19 +67,39 @@ fun GroceryItemRow(
             )
         )
         
-        // Editable text field (BasicTextField)
+        // Editable text field (BasicTextField) with local state for debouncing
+        var textFieldValue by remember(item.id) { mutableStateOf(TextFieldValue(item.name)) }
+        var isFocused by remember { mutableStateOf(false) }
+
+        // Sync from upstream if it changes externally AND we are not focused
+        LaunchedEffect(item.name) {
+            if (!isFocused && textFieldValue.text != item.name) {
+                textFieldValue = textFieldValue.copy(text = item.name)
+            }
+        }
+
+        // Debounced save
+        LaunchedEffect(textFieldValue.text) {
+             if (textFieldValue.text != item.name) {
+                 delay(500) // 500ms debounce
+                 onNameChange(item, textFieldValue.text)
+             }
+        }
+
         androidx.compose.foundation.text.BasicTextField(
-            value = item.name,
-            onValueChange = { onNameChange(item, it) },
+            value = textFieldValue,
+            onValueChange = { textFieldValue = it },
             textStyle = MaterialTheme.typography.bodyLarge.copy(
                 fontSize = 16.sp,
                 textDecoration = if (item.isCompleted) TextDecoration.LineThrough else null,
                 color = if (item.isCompleted) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) 
                        else MaterialTheme.colorScheme.onSurface
             ),
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .onFocusChanged { focusState -> isFocused = focusState.isFocused },
             decorationBox = { innerTextField ->
-                 if (item.name.isEmpty()) {
+                 if (item.name.isEmpty() && !isFocused) {
                      Text(
                          text = "List item",
                          style = MaterialTheme.typography.bodyLarge.copy(
