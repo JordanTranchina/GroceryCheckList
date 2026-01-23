@@ -29,6 +29,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.type
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import kotlinx.coroutines.delay
 
 @Composable
@@ -39,6 +50,8 @@ fun GroceryItemRow(
     onNameChange: (GroceryItem, String) -> Unit,
     isSelected: Boolean,
     onSelect: () -> Unit,
+    onAddNewItem: () -> Unit = {},
+    focusRequester: FocusRequester? = null,
     modifier: Modifier = Modifier,
     dragModifier: Modifier = Modifier
 ) {
@@ -86,6 +99,8 @@ fun GroceryItemRow(
              }
         }
 
+        val focusModifier = if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier
+
         androidx.compose.foundation.text.BasicTextField(
             value = textFieldValue,
             onValueChange = { textFieldValue = it },
@@ -95,9 +110,27 @@ fun GroceryItemRow(
                 color = if (item.isCompleted) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) 
                        else MaterialTheme.colorScheme.onSurface
             ),
+            keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.Sentences,
+                imeAction = ImeAction.Next
+            ),
+            keyboardActions = KeyboardActions(
+                onNext = { 
+                    onAddNewItem() 
+                }
+            ),
             modifier = Modifier
                 .weight(1f)
-                .onFocusChanged { focusState -> isFocused = focusState.isFocused },
+                .then(focusModifier)
+                .onFocusChanged { focusState -> isFocused = focusState.isFocused }
+                .onKeyEvent { event ->
+                    if (event.type == KeyEventType.KeyUp && event.key == Key.Backspace && textFieldValue.text.isEmpty()) {
+                         onDelete(item)
+                         true
+                    } else {
+                        false
+                    }
+                },
             decorationBox = { innerTextField ->
                  if (item.name.isEmpty() && !isFocused) {
                      Text(
