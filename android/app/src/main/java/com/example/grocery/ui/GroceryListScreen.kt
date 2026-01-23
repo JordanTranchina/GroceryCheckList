@@ -72,6 +72,7 @@ fun GroceryListScreen(
     val items by repository.items.collectAsState(initial = emptyList())
     // ... existing variable declarations ...
     var newItemName by remember { mutableStateOf("") }
+    var focusedItemId by remember { mutableStateOf<String?>(null) }
     
     // Sort: Unchecked first (by order), then Checked
     var activeItems by remember { mutableStateOf<List<GroceryItem>>(emptyList()) }
@@ -202,6 +203,14 @@ fun GroceryListScreen(
                             }
                         },
                         dismissContent = {
+                             val focusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
+                             androidx.compose.runtime.LaunchedEffect(item.id, focusedItemId) {
+                                 if (focusedItemId == item.id) {
+                                     focusRequester.requestFocus()
+                                     focusedItemId = null
+                                 }
+                             }
+
                              GroceryItemRow(
                                 item = item,
                                 onToggle = { repository.toggleCompletion(it) },
@@ -217,6 +226,11 @@ fun GroceryListScreen(
                                 onSelect = { 
                                     selectedItemId = if (selectedItemId == item.id) null else item.id 
                                 },
+                                onAddNewItem = {
+                                    val newId = repository.addItem("")
+                                    focusedItemId = newId
+                                },
+                                focusRequester = focusRequester,
                                 modifier = Modifier
                                     .animateItemPlacement()
                                     .padding(vertical = if(isDragging) 4.dp else 0.dp), // add minimal spacing during drag
@@ -227,16 +241,12 @@ fun GroceryListScreen(
                 }
             }
 
-            // Inline Input Row
+            // Add Item Button
             item {
-                InputRow(
-                    text = newItemName,
-                    onTextChange = { newItemName = it },
-                    onAdd = {
-                        if (newItemName.isNotEmpty()) {
-                            repository.addItem(newItemName)
-                            newItemName = ""
-                        }
+                AddListButton(
+                    onClick = {
+                        val newId = repository.addItem("")
+                        focusedItemId = newId
                     }
                 )
             }
@@ -297,44 +307,26 @@ fun GroceryListScreen(
 }
 
 @Composable
-fun InputRow(
-    text: String,
-    onTextChange: (String) -> Unit,
-    onAdd: () -> Unit
+fun AddListButton(
+    onClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp, horizontal = 4.dp),
+            .clickable(onClick = onClick)
+            .padding(vertical = 12.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Plus Icon aligned with Drag Handle/Checkbox area
         Icon(
             imageVector = Icons.Default.Add,
-            contentDescription = "Add Item",
+            contentDescription = "Add List Item",
             tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-            modifier = Modifier.padding(start = 16.dp, end = 24.dp) 
+            modifier = Modifier.padding(start = 16.dp, end = 24.dp)
         )
-
-        TextField(
-            value = text,
-            onValueChange = onTextChange,
-            placeholder = { Text("List item") },
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color.Transparent,
-                unfocusedContainerColor = Color.Transparent,
-                focusedIndicatorColor = Color.Transparent, // No underline
-                unfocusedIndicatorColor = Color.Transparent,
-                disabledIndicatorColor = Color.Transparent
-            ),
-            keyboardOptions = KeyboardOptions(
-                capitalization = KeyboardCapitalization.Sentences,
-                imeAction = ImeAction.Done
-            ),
-            keyboardActions = KeyboardActions(
-                onDone = { onAdd() }
-            ),
-            modifier = Modifier.weight(1f)
+        Text(
+            text = "List item",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
         )
     }
 }
