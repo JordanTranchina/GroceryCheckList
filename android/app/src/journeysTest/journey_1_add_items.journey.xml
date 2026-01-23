@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<journey name="Add items to the list">
+    <description>Verify that items can be added to the grocery list and are displayed correctly.</description>
+    <actions xml:space="preserve">
+        <action>Launch the grocery application</action>
+        <action>Verify the main grocery list is displayed and empty</action>
+        <action>Tap the "List item" input field</action>
+        <action>Type "Milk" and press the enter key</action>
+        <action>Type "Eggs" and press the enter key</action>
+        <action>Verify that "Milk" and "Eggs" are visible as unchecked items in the list</action>
+    </actions>
+</journey>

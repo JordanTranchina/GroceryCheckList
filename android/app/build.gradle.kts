@@ -44,6 +44,26 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    testOptions {
+        suites {
+            create("journeysTest") {
+                assets {
+                }
+                targets {
+                    create("default") {
+                    }
+                }
+                useJunitEngine {
+                    inputs += listOf(com.android.build.api.dsl.AgpTestSuiteInputParameters.TESTED_APKS)
+                    includeEngines += listOf("journeys-test-engine")
+                    enginesDependencies("org.junit.platform:junit-platform-launcher:1.13.4")
+                    enginesDependencies("org.junit.platform:junit-platform-engine:1.13.4")
+                    enginesDependencies("com.android.tools.journeys:journeys-junit-engine:0.2.1")
+                }
+                targetVariants += listOf("debug")
+            }
+        }
+    }
 }
 
 dependencies {
