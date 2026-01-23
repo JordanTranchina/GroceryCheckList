@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<journey name="Reorder items by priority">
+    <description>Verify that items can be reordered using long press and drag.</description>
+    <actions xml:space="preserve">
+        <action>Launch the grocery application</action>
+        <action>Type "Bananas" and press the enter key</action>
+        <action>Type "Apples" and press the enter key</action>
+        <action>Type "Coffee" and press the enter key</action>
+        <action>Long press and drag the "Coffee" item</action>
+        <action>Move "Coffee" to the top of the list and release it</action>
+        <action>Verify the new order is "Coffee", "Bananas", "Apples"</action>
+    </actions>
+</journey>

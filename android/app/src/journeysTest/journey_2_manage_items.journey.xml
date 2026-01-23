@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<journey name="Manage and clean up items">
+    <description>Verify marking items as complete and their movement to the checked items section.</description>
+    <actions xml:space="preserve">
+        <action>Launch the grocery application</action>
+        <action>Type "Milk" and press the enter key</action>
+        <action>Type "Eggs" and press the enter key</action>
+        <action>Tap the checkbox next to "Milk" to mark it as complete</action>
+        <action>Verify that "Milk" moves to the "Checked items" section at the bottom</action>
+    </actions>
+</journey>

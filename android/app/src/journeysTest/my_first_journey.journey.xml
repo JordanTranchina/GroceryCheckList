@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<journey name="My first Journey">
-    <description>is this thing on?</description>
-    <actions xml:space="preserve">
-        <action>find the home button</action>
-        <action>see if you can click it</action>
-        </actions>
-</journey>
