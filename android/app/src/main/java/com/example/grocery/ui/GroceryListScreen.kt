@@ -230,6 +230,9 @@ fun GroceryListScreen(
                                     val newId = repository.addItem("")
                                     focusedItemId = newId
                                 },
+                                onAddMultipleItems = { newItems ->
+                                    repository.addItems(newItems)
+                                },
                                 focusRequester = focusRequester,
                                 modifier = Modifier
                                     .animateItemPlacement()

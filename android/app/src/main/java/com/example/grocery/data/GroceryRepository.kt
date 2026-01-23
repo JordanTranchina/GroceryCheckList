@@ -49,6 +49,29 @@ class GroceryRepository {
         return finalId
     }
 
+    fun addItems(names: List<String>) {
+        if (names.isEmpty()) return
+        
+        val batch = db.batch()
+        val baseOrder = (System.currentTimeMillis() / 1000).toInt()
+        
+        names.forEachIndexed { index, name ->
+            val docRef = collection.document()
+            val newItem = GroceryItem(
+                id = docRef.id,
+                name = name,
+                isCompleted = false,
+                order = baseOrder + index,
+                createdAt = Date()
+            )
+            batch.set(docRef, newItem)
+        }
+        
+        batch.commit()
+            .addOnSuccessListener { Log.d("GroceryRepository", "Batch add successful") }
+            .addOnFailureListener { e -> Log.e("GroceryRepository", "Batch add failed", e) }
+    }
+
     fun toggleCompletion(item: GroceryItem) {
         Log.d("GroceryRepository", "Toggling item: ${item.id} current status: ${item.isCompleted}")
         if (item.id.isNotEmpty()) {

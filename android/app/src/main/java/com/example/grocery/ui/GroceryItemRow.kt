@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.grocery.util.PasteUtils
 import com.example.grocery.model.GroceryItem
 
 import androidx.compose.ui.text.input.TextFieldValue
@@ -51,6 +52,7 @@ fun GroceryItemRow(
     isSelected: Boolean,
     onSelect: () -> Unit,
     onAddNewItem: () -> Unit = {},
+    onAddMultipleItems: (List<String>) -> Unit = {},
     focusRequester: FocusRequester? = null,
     modifier: Modifier = Modifier,
     dragModifier: Modifier = Modifier
@@ -103,7 +105,15 @@ fun GroceryItemRow(
 
         androidx.compose.foundation.text.BasicTextField(
             value = textFieldValue,
-            onValueChange = { textFieldValue = it },
+            onValueChange = { newValue ->
+                val result = PasteUtils.processInput(textFieldValue.text, newValue.text)
+                if (result.newItems.isNotEmpty()) {
+                    textFieldValue = newValue.copy(text = result.updatedCurrentText)
+                    onAddMultipleItems(result.newItems)
+                } else {
+                    textFieldValue = newValue
+                }
+            },
             textStyle = MaterialTheme.typography.bodyLarge.copy(
                 fontSize = 16.sp,
                 textDecoration = if (item.isCompleted) TextDecoration.LineThrough else null,
@@ -128,7 +138,7 @@ fun GroceryItemRow(
                          onDelete(item)
                          true
                     } else {
-                        false
+                         false
                     }
                 },
             decorationBox = { innerTextField ->
