@@ -69,4 +69,4 @@ cd android
 
 - ✅ **Real-time Sync**: Updates propagate between devices in seconds.
 - ✅ **Standalone Mode**: Watch app works via Wi-Fi/LTE without the phone.
-- ✅ **Smart Sorting**: Unchecked items float to the top; completed items sink to the bottom.
+- ✅ **Smart Sorting**: Unchecked items float to the top; completed items sink to the bottom!
