@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<journey name="Checkbox feedback and touch target">
+    <description>Verify the checkbox touch target is larger and checking an item provides clear feedback.</description>
+    <actions xml:space="preserve">
+        <action>Launch the grocery application</action>
+        <action>Ensure there is at least one unchecked item in the list</action>
+        <action>Tap the checkbox area (including padding) to check the item</action>
+        <action>Verify the item moves to the "Checked items" section and visible feedback is shown</action>
+    </actions>
+</journey>
