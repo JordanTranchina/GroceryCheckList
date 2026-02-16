@@ -66,7 +66,7 @@ struct ContentView: View {
             Section(header: Text("To Buy")) {
                 ForEach(viewModel.activeItems) { item in
                     GroceryItemRow(item: item, onToggle: viewModel.toggleCompletion)
-                        .swipeActions(edge: .leading) {
+                        .swipeActions(edge: .leading, allowsFullSwipe: true) {
                             Button {
                                 viewModel.toggleCompletion(item: item)
                             } label: {
@@ -74,7 +74,7 @@ struct ContentView: View {
                             }
                             .tint(.green)
                         }
-                        .swipeActions(edge: .trailing) {
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button {
                                 viewModel.moveToBottom(item: item)
                             } label: {
