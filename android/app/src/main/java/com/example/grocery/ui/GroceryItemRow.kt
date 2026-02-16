@@ -3,9 +3,13 @@ package com.example.grocery.ui
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -15,8 +19,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -72,16 +81,34 @@ fun GroceryItemRow(
             modifier = dragModifier.padding(start = 8.dp, end = 8.dp)
         )
 
-        Checkbox(
-            checked = item.isCompleted,
-            onCheckedChange = { onToggle(item) },
-            colors = androidx.compose.material3.CheckboxDefaults.colors(
-                checkedColor = MaterialTheme.colorScheme.secondary,
-                uncheckedColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                checkmarkColor = MaterialTheme.colorScheme.surface
-            )
+        // Larger touch target + animated feedback for checking items
+        val checkScale by animateFloatAsState(targetValue = if (item.isCompleted) 0.92f else 1f)
+        val highlightColor by animateColorAsState(
+            targetValue = if (item.isCompleted) MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f) else androidx.compose.ui.graphics.Color.Transparent
         )
-        
+
+        Box(
+            modifier = Modifier
+                .padding(start = 4.dp, end = 8.dp)
+                .size(48.dp)
+                .background(highlightColor, shape = CircleShape)
+                .scale(checkScale)
+                .semantics { contentDescription = "Toggle completion" }
+                .clickable { onToggle(item) },
+            contentAlignment = Alignment.Center
+        ) {
+            Checkbox(
+                checked = item.isCompleted,
+                onCheckedChange = { onToggle(item) },
+                colors = androidx.compose.material3.CheckboxDefaults.colors(
+                    checkedColor = MaterialTheme.colorScheme.secondary,
+                    uncheckedColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    checkmarkColor = MaterialTheme.colorScheme.surface
+                ),
+                modifier = Modifier.size(24.dp)
+            )
+        }
+
         // Editable text field (BasicTextField) with local state for debouncing
         var textFieldValue by remember(item.id) { mutableStateOf(TextFieldValue(item.name)) }
         var isFocused by remember { mutableStateOf(false) }
