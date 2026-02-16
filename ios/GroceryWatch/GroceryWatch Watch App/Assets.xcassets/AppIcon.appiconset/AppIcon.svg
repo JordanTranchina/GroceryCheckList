@@ -1,0 +1,15 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1024" height="1024" rx="240" fill="#f7f4e5"/>
+  <g>
+    <!-- Basket base -->
+    <rect x="250" y="600" width="524" height="170" rx="50" fill="#e27322"/>
+    <!-- Basket handle -->
+    <path d="M320 600 Q512 450 704 600" fill="none" stroke="#b75512" stroke-width="30"/>
+    <!-- Apple -->
+    <ellipse cx="410" cy="640" rx="55" ry="60" fill="#86bb3c"/>
+    <ellipse cx="410" cy="610" rx="12" ry="18" fill="#568b2e"/>
+    <!-- Carrot -->
+    <rect x="600" y="640" width="36" height="72" rx="16" fill="#e29c3a" transform="rotate(-15 618 676)"/>
+    <ellipse cx="618" cy="630" rx="18" ry="22" fill="#3db44a"/>
+  </g>
+</svg>
