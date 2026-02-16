@@ -25,7 +25,7 @@ struct GroceryItemRow: View {
                 }
                 
                 // Delay actual toggle to show the green flash
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                     onToggle(item)
                     // Reset state for when/if the row is reused or item comes back
                     isCompleting = false 
@@ -66,6 +66,22 @@ struct ContentView: View {
             Section(header: Text("To Buy")) {
                 ForEach(viewModel.activeItems) { item in
                     GroceryItemRow(item: item, onToggle: viewModel.toggleCompletion)
+                        .swipeActions(edge: .leading) {
+                            Button {
+                                viewModel.toggleCompletion(item: item)
+                            } label: {
+                                Label("Complete", systemImage: "checkmark")
+                            }
+                            .tint(.green)
+                        }
+                        .swipeActions(edge: .trailing) {
+                            Button {
+                                viewModel.moveToBottom(item: item)
+                            } label: {
+                                Label("To Bottom", systemImage: "arrow.bottom.to.line")
+                            }
+                            .tint(.blue)
+                        }
                 }
                 .onMove(perform: viewModel.moveItem)
             }

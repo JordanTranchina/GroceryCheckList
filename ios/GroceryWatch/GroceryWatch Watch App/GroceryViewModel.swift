@@ -97,6 +97,44 @@ class GroceryViewModel: ObservableObject {
     func moveItem(from source: IndexSet, to destination: Int) {
         print("Reordering via REST not implemented yet")
     }
+    
+    func moveToBottom(item: GroceryItem) {
+        // 1. Calculate new max order
+        let currentMaxOrder = items.map { $0.order }.max() ?? 0
+        let newOrder = currentMaxOrder + 1
+        
+        guard let id = item.id, let index = items.firstIndex(where: { $0.id == id }) else { return }
+        
+        // 2. Optimistic update
+        items[index].order = newOrder
+        
+        // 3. Persist to Firestore
+        let urlString = "https://firestore.googleapis.com/v1/projects/\(projectId)/databases/(default)/documents/\(collectionName)/\(id)?updateMask.fieldPaths=order"
+        guard let url = URL(string: urlString) else { return }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "PATCH"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let body: [String: Any] = [
+            "fields": [
+                "order": ["integerValue": "\(newOrder)"]
+            ]
+        ]
+        
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        } catch {
+            print("Error encoding body: \(error)")
+            return
+        }
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("Error moving item to bottom: \(error)")
+            }
+        }.resume()
+    }
 }
 
 // REST API Helper Models
