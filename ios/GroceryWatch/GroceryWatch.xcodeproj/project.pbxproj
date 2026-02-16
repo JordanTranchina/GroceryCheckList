@@ -18,6 +18,13 @@
 			remoteGlobalIDString = EB74E2E22F12F4A5000ABCCF;
 			remoteInfo = "GroceryWatch Watch App";
 		};
+		EB7FA3C42F438E4A00806129 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = EB74E2D72F12F4A5000ABCCF /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = EB74E2E22F12F4A5000ABCCF;
+			remoteInfo = "GroceryWatch Watch App";
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -37,6 +44,7 @@
 /* Begin PBXFileReference section */
 		EB74E2DD2F12F4A5000ABCCF /* GroceryWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GroceryWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		EB74E2E32F12F4A5000ABCCF /* GroceryWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "GroceryWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		EB7FA3C02F438E4A00806129 /* GroceryWatchTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GroceryWatchTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -45,10 +53,22 @@
 			path = "GroceryWatch Watch App";
 			sourceTree = "<group>";
 		};
+		EB7FA3C12F438E4A00806129 /* GroceryWatchTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = GroceryWatchTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		EB74E2E02F12F4A5000ABCCF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EB7FA3BD2F438E4A00806129 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -62,6 +82,7 @@
 			isa = PBXGroup;
 			children = (
 				EB74E2E72F12F4A5000ABCCF /* GroceryWatch Watch App */,
+				EB7FA3C12F438E4A00806129 /* GroceryWatchTests */,
 				EB84ACBC2F15F8E0006445D2 /* Frameworks */,
 				EB74E2DE2F12F4A5000ABCCF /* Products */,
 			);
@@ -72,6 +93,7 @@
 			children = (
 				EB74E2DD2F12F4A5000ABCCF /* GroceryWatch.app */,
 				EB74E2E32F12F4A5000ABCCF /* GroceryWatch Watch App.app */,
+				EB7FA3C02F438E4A00806129 /* GroceryWatchTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -127,6 +149,29 @@
 			productReference = EB74E2E32F12F4A5000ABCCF /* GroceryWatch Watch App.app */;
 			productType = "com.apple.product-type.application";
 		};
+		EB7FA3BF2F438E4A00806129 /* GroceryWatchTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = EB7FA3C62F438E4A00806129 /* Build configuration list for PBXNativeTarget "GroceryWatchTests" */;
+			buildPhases = (
+				EB7FA3BC2F438E4A00806129 /* Sources */,
+				EB7FA3BD2F438E4A00806129 /* Frameworks */,
+				EB7FA3BE2F438E4A00806129 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				EB7FA3C52F438E4A00806129 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				EB7FA3C12F438E4A00806129 /* GroceryWatchTests */,
+			);
+			name = GroceryWatchTests;
+			packageProductDependencies = (
+			);
+			productName = GroceryWatchTests;
+			productReference = EB7FA3C02F438E4A00806129 /* GroceryWatchTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -142,6 +187,10 @@
 					};
 					EB74E2E22F12F4A5000ABCCF = {
 						CreatedOnToolsVersion = 26.2;
+					};
+					EB7FA3BF2F438E4A00806129 = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = EB74E2E22F12F4A5000ABCCF;
 					};
 				};
 			};
@@ -163,6 +212,7 @@
 			targets = (
 				EB74E2DC2F12F4A5000ABCCF /* GroceryWatch */,
 				EB74E2E22F12F4A5000ABCCF /* GroceryWatch Watch App */,
+				EB7FA3BF2F438E4A00806129 /* GroceryWatchTests */,
 			);
 		};
 /* End PBXProject section */
@@ -182,10 +232,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		EB7FA3BE2F438E4A00806129 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		EB74E2DF2F12F4A5000ABCCF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EB7FA3BC2F438E4A00806129 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -199,6 +263,11 @@
 			isa = PBXTargetDependency;
 			target = EB74E2E22F12F4A5000ABCCF /* GroceryWatch Watch App */;
 			targetProxy = EB74E2E52F12F4A5000ABCCF /* PBXContainerItemProxy */;
+		};
+		EB7FA3C52F438E4A00806129 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = EB74E2E22F12F4A5000ABCCF /* GroceryWatch Watch App */;
+			targetProxy = EB7FA3C42F438E4A00806129 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -425,6 +494,53 @@
 			};
 			name = Release;
 		};
+		EB7FA3C72F438E4A00806129 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4GTF274RAS;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = JordanTranchina.GroceryWatchTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/GroceryWatch Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/GroceryWatch Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 26.2;
+			};
+			name = Debug;
+		};
+		EB7FA3C82F438E4A00806129 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4GTF274RAS;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = JordanTranchina.GroceryWatchTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/GroceryWatch Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/GroceryWatch Watch App";
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 26.2;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -451,6 +567,15 @@
 			buildConfigurations = (
 				EB74E2F52F12F4A7000ABCCF /* Debug */,
 				EB74E2F62F12F4A7000ABCCF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		EB7FA3C62F438E4A00806129 /* Build configuration list for PBXNativeTarget "GroceryWatchTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EB7FA3C72F438E4A00806129 /* Debug */,
+				EB7FA3C82F438E4A00806129 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
