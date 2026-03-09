@@ -16,7 +16,6 @@ class GroceryPasteTest {
     val composeTestRule = createComposeRule()
 
     @Test
-    @Test
     fun pasteMultilineText_splitsItems() {
         val item = GroceryItem("id1", "", false, 0, Date())
         var capturedNewItems: List<String> = emptyList()

@@ -1,5 +1,7 @@
 package com.example.grocery
 
+
+
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -52,5 +54,30 @@ class GroceryListScreenTest {
                 items.size == 2 && items.containsAll(listOf(completedItem1, completedItem2))
             })
         }
+    }
+
+    @Test
+    fun undoLastAction_callsRepositoryUndoLastAction() {
+        // Arrange
+        val repository = mockk<GroceryRepository>(relaxed = true)
+
+        val activeItem = GroceryItem("id1", "Milk", false, 0, Date())
+        val mockItems = listOf(activeItem)
+
+        every { repository.items } returns flowOf(mockItems)
+
+        composeTestRule.setContent {
+            GroceryListScreen(repository = repository)
+        }
+
+        // Act
+        // 1. Click the 3-dot menu icon
+        composeTestRule.onNodeWithContentDescription("Menu").performClick()
+
+        // 2. Click the "Undo" dropdown item
+        composeTestRule.onNodeWithText("Undo").performClick()
+
+        // Assert
+        verify(exactly = 1) { repository.undoLastAction() }
     }
 }
