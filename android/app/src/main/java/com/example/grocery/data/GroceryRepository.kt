@@ -91,6 +91,21 @@ class GroceryRepository {
         }
     }
 
+    fun deleteItems(itemsToDelete: List<GroceryItem>) {
+        if (itemsToDelete.isEmpty()) return
+        
+        val batch = db.batch()
+        itemsToDelete.forEach { item ->
+            if (item.id.isNotEmpty()) {
+                batch.delete(collection.document(item.id))
+            }
+        }
+        
+        batch.commit()
+            .addOnSuccessListener { Log.d("GroceryRepository", "Batch delete successful") }
+            .addOnFailureListener { e -> Log.e("GroceryRepository", "Batch delete failed", e) }
+    }
+
     fun updateName(item: GroceryItem, newName: String) {
         if (item.id.isNotEmpty()) {
             collection.document(item.id).update("name", newName)

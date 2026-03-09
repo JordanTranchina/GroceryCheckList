@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Grocery List</string>
+    <string name="delete_all_checked_items">Delete all checked items</string>
 </resources>
