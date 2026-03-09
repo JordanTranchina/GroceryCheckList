@@ -13,8 +13,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Run xcodebuild
+      - name: Inspect Simulators
         run: |
-          SIM_ID=$(xcodebuild -showdestinations -scheme "GroceryWatch Watch App" -project ios/GroceryWatch/GroceryWatch.xcodeproj | grep "watchOS Simulator" | grep -v "Placeholder" | head -n 1 | awk -F'id:' '{print $2}' | awk -F',' '{print $1}' | tr -d ' ')
-          echo "Using Simulator ID: $SIM_ID"
-          xcodebuild test -scheme "GroceryWatch Watch App" -project ios/GroceryWatch/GroceryWatch.xcodeproj -destination "platform=watchOS Simulator,id=$SIM_ID"
+          xcrun simctl list
+          xcodebuild -showdestinations -scheme "GroceryWatch Watch App" -project ios/GroceryWatch/GroceryWatch.xcodeproj || true
+          exit 1
