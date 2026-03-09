@@ -13,6 +13,15 @@ class GroceryRepository {
     private val db = FirebaseFirestore.getInstance()
     private val collection = db.collection("groceries")
 
+    sealed class GroceryAction {
+        data class DeleteItem(val item: GroceryItem) : GroceryAction()
+        data class ToggleCompletion(val item: GroceryItem, val previousState: Boolean) : GroceryAction()
+        data class DeleteItems(val items: List<GroceryItem>) : GroceryAction()
+    }
+
+    var lastAction: GroceryAction? = null
+        private set
+
     val items: Flow<List<GroceryItem>> = callbackFlow {
         val listener = collection
             .orderBy("order", Query.Direction.ASCENDING)
@@ -75,6 +84,7 @@ class GroceryRepository {
     fun toggleCompletion(item: GroceryItem) {
         Log.d("GroceryRepository", "Toggling item: ${item.id} current status: ${item.isCompleted}")
         if (item.id.isNotEmpty()) {
+            lastAction = GroceryAction.ToggleCompletion(item, item.isCompleted)
             collection.document(item.id).update("isCompleted", !item.isCompleted)
                 .addOnSuccessListener { Log.d("GroceryRepository", "Update successful") }
                 .addOnFailureListener { e -> Log.e("GroceryRepository", "Update failed", e) }
@@ -85,6 +95,7 @@ class GroceryRepository {
 
     fun deleteItem(item: GroceryItem) {
         if (item.id.isNotEmpty()) {
+            lastAction = GroceryAction.DeleteItem(item)
             collection.document(item.id).delete()
                 .addOnSuccessListener { Log.d("GroceryRepository", "Delete successful") }
                 .addOnFailureListener { e -> Log.e("GroceryRepository", "Delete failed", e) }
@@ -93,6 +104,8 @@ class GroceryRepository {
 
     fun deleteItems(itemsToDelete: List<GroceryItem>) {
         if (itemsToDelete.isEmpty()) return
+        
+        lastAction = GroceryAction.DeleteItems(itemsToDelete)
         
         val batch = db.batch()
         itemsToDelete.forEach { item ->
@@ -125,5 +138,27 @@ class GroceryRepository {
         batch.commit()
             .addOnSuccessListener { Log.d("GroceryRepository", "Batch order update successful") }
             .addOnFailureListener { e -> Log.e("GroceryRepository", "Batch order update failed", e) }
+    }
+
+    fun undoLastAction() {
+        when (val action = lastAction) {
+            is GroceryAction.DeleteItem -> {
+                collection.document(action.item.id).set(action.item)
+            }
+            is GroceryAction.DeleteItems -> {
+                val batch = db.batch()
+                action.items.forEach { item ->
+                    batch.set(collection.document(item.id), item)
+                }
+                batch.commit()
+            }
+            is GroceryAction.ToggleCompletion -> {
+                collection.document(action.item.id).update("isCompleted", action.previousState)
+            }
+            null -> {
+                Log.d("GroceryRepository", "No action to undo")
+            }
+        }
+        lastAction = null
     }
 }

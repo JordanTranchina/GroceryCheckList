@@ -52,10 +52,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.DismissDirection
-import androidx.compose.material3.DismissValue
-import androidx.compose.material3.SwipeToDismiss
-import androidx.compose.material3.rememberDismissState
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxState
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.foundation.background
 import com.example.grocery.R
 import com.example.grocery.data.GroceryRepository
@@ -138,6 +138,13 @@ fun GroceryListScreen(
                                     showMenu = false
                                 }
                             )
+                            DropdownMenuItem(
+                                text = { Text("Undo") },
+                                onClick = {
+                                    repository.undoLastAction()
+                                    showMenu = false
+                                }
+                            )
                         }
                     }
                 },
@@ -160,10 +167,17 @@ fun GroceryListScreen(
             // Active Items Section
             items(activeItems, key = { it.id }) { item ->
                 ReorderableItem(state, key = item.id) { isDragging ->
-                    val dismissState = rememberDismissState(
+                    val dismissState = rememberSwipeToDismissBoxState(
                         confirmValueChange = { dismissValue ->
                             when (dismissValue) {
-                                DismissValue.DismissedToEnd -> {
+                                SwipeToDismissBoxValue.EndToStart -> {
+                                    // Swipe Left -> Delete
+                                    repository.deleteItem(item)
+                                    activeItems = activeItems.filter { it.id != item.id }
+                                    if (selectedItemId == item.id) selectedItemId = null
+                                    true
+                                }
+                                SwipeToDismissBoxValue.StartToEnd -> {
                                     // Swipe Right -> Toggle Completion (Mark as Done)
                                     repository.toggleCompletion(item)
                                     // Optimistic update: remove from active list instantly
@@ -171,35 +185,30 @@ fun GroceryListScreen(
                                     if (selectedItemId == item.id) selectedItemId = null
                                     true
                                 }
-                                DismissValue.DismissedToStart -> {
-                                    // Swipe Left -> Delete
-                                    repository.deleteItem(item)
-                                    activeItems = activeItems.filter { it.id != item.id }
-                                    if (selectedItemId == item.id) selectedItemId = null
-                                    true
-                                }
                                 else -> false
                             }
-                        }
+                        },
+                        positionalThreshold = { totalDistance -> totalDistance * 0.75f }
                     )
 
-                    SwipeToDismiss(
+                    SwipeToDismissBox(
                         state = dismissState,
-                        directions = setOf(DismissDirection.StartToEnd, DismissDirection.EndToStart),
-                        background = {
+                        enableDismissFromStartToEnd = true,
+                        enableDismissFromEndToStart = true,
+                        backgroundContent = {
                             val color = when (dismissState.dismissDirection) {
-                                DismissDirection.StartToEnd -> Color(0xFF4CAF50) // Green
-                                DismissDirection.EndToStart -> Color(0xFFE53935) // Red
+                                SwipeToDismissBoxValue.StartToEnd -> Color(0xFF4CAF50) // Green
+                                SwipeToDismissBoxValue.EndToStart -> Color(0xFFE53935) // Red
                                 else -> Color.Transparent
                             }
                             val alignment = when (dismissState.dismissDirection) {
-                                DismissDirection.StartToEnd -> Alignment.CenterStart
-                                DismissDirection.EndToStart -> Alignment.CenterEnd
+                                SwipeToDismissBoxValue.StartToEnd -> Alignment.CenterStart
+                                SwipeToDismissBoxValue.EndToStart -> Alignment.CenterEnd
                                 else -> Alignment.Center
                             }
                             val icon = when (dismissState.dismissDirection) {
-                                DismissDirection.StartToEnd -> Icons.Default.Check
-                                DismissDirection.EndToStart -> Icons.Default.Close // Or Delete icon
+                                SwipeToDismissBoxValue.StartToEnd -> Icons.Default.Check
+                                SwipeToDismissBoxValue.EndToStart -> Icons.Default.Close // Or Delete icon
                                 else -> null
                             }
 
@@ -219,7 +228,7 @@ fun GroceryListScreen(
                                 }
                             }
                         },
-                        dismissContent = {
+                        content = {
                              val focusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
                              androidx.compose.runtime.LaunchedEffect(item.id, focusedItemId) {
                                  if (focusedItemId == item.id) {
