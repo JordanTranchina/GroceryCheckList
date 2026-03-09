@@ -1,0 +1,17 @@
+name: iOS CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Run xcodebuild
+        run: xcodebuild test -scheme "GroceryWatch Watch App" -project ios/GroceryWatch/GroceryWatch.xcodeproj -destination "platform=watchOS Simulator,name=Apple Watch Series 10 (42mm)"
