@@ -132,6 +132,13 @@ fun GroceryListScreen(
                             onDismissRequest = { showMenu = false }
                         ) {
                             DropdownMenuItem(
+                                text = { Text(stringResource(R.string.sort_by_section)) },
+                                onClick = {
+                                    repository.sortBySection(activeItems)
+                                    showMenu = false
+                                }
+                            )
+                            DropdownMenuItem(
                                 text = { Text(stringResource(R.string.delete_all_checked_items)) },
                                 onClick = {
                                     repository.deleteItems(completedItems)
