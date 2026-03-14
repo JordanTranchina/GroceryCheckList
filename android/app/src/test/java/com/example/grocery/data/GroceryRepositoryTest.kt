@@ -41,7 +41,12 @@ class GroceryRepositoryTest {
             if (itemsToDelete.isEmpty()) return
             lastAction = GroceryRepository.GroceryAction.DeleteItems(itemsToDelete)
         }
-        
+
+        fun sortBySection(items: List<GroceryItem>) {
+            if (items.isEmpty()) return
+            lastAction = GroceryRepository.GroceryAction.SortBySection(items.associate { it.id to it.order })
+        }
+
         fun undoLastAction() {
             // For testing, just clear it to simulate consumption
             lastAction = null
@@ -104,6 +109,34 @@ class GroceryRepositoryTest {
         assertEquals(items, action.items)
     }
     
+    @Test
+    fun `sortBySection records SortBySection action with previous orders`() {
+        // Arrange
+        val items = listOf(
+            GroceryItem("id1", "Beer", false, 0, Date()),
+            GroceryItem("id2", "Bananas", false, 1, Date()),
+            GroceryItem("id3", "Bread", false, 2, Date())
+        )
+
+        // Act
+        testRepository.sortBySection(items)
+
+        // Assert
+        val action = testRepository.lastAction
+        assertTrue(action is GroceryRepository.GroceryAction.SortBySection)
+        action as GroceryRepository.GroceryAction.SortBySection
+        assertEquals(mapOf("id1" to 0, "id2" to 1, "id3" to 2), action.previousOrders)
+    }
+
+    @Test
+    fun `sortBySection with empty list does not record action`() {
+        // Act
+        testRepository.sortBySection(emptyList())
+
+        // Assert
+        assertNull(testRepository.lastAction)
+    }
+
     @Test
     fun `undoLastAction clears lastAction`() {
         // Arrange

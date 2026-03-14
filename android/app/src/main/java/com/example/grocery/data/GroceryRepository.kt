@@ -2,6 +2,7 @@ package com.example.grocery.data
 
 import android.util.Log
 import com.example.grocery.model.GroceryItem
+import com.example.grocery.util.GeminiAisleSorter
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.channels.awaitClose
@@ -12,11 +13,13 @@ import java.util.Date
 class GroceryRepository {
     private val db = FirebaseFirestore.getInstance()
     private val collection = db.collection("groceries")
+    private val geminiAisleSorter = GeminiAisleSorter()
 
     sealed class GroceryAction {
         data class DeleteItem(val item: GroceryItem) : GroceryAction()
         data class ToggleCompletion(val item: GroceryItem, val previousState: Boolean) : GroceryAction()
         data class DeleteItems(val items: List<GroceryItem>) : GroceryAction()
+        data class SortBySection(val previousOrders: Map<String, Int>) : GroceryAction()
     }
 
     var lastAction: GroceryAction? = null
@@ -127,6 +130,13 @@ class GroceryRepository {
         }
     }
 
+    suspend fun sortBySection(items: List<GroceryItem>) {
+        if (items.isEmpty()) return
+        lastAction = GroceryAction.SortBySection(items.associate { it.id to it.order })
+        val (sortedItems, sections) = geminiAisleSorter.sortItemsWithSections(items)
+        updateOrdersAndSections(sortedItems, sections)
+    }
+
     fun updateOrders(items: List<GroceryItem>) {
         val batch = db.batch()
         items.forEachIndexed { index, item ->
@@ -138,6 +148,20 @@ class GroceryRepository {
         batch.commit()
             .addOnSuccessListener { Log.d("GroceryRepository", "Batch order update successful") }
             .addOnFailureListener { e -> Log.e("GroceryRepository", "Batch order update failed", e) }
+    }
+
+    fun updateOrdersAndSections(items: List<GroceryItem>, sections: Map<String, String>) {
+        val batch = db.batch()
+        items.forEachIndexed { index, item ->
+            if (item.id.isNotEmpty()) {
+                val ref = collection.document(item.id)
+                val section = sections[item.name] ?: "OTHER"
+                batch.update(ref, mapOf("order" to index, "section" to section))
+            }
+        }
+        batch.commit()
+            .addOnSuccessListener { Log.d("GroceryRepository", "Batch order+section update successful") }
+            .addOnFailureListener { e -> Log.e("GroceryRepository", "Batch order+section update failed", e) }
     }
 
     fun undoLastAction() {
@@ -154,6 +178,15 @@ class GroceryRepository {
             }
             is GroceryAction.ToggleCompletion -> {
                 collection.document(action.item.id).update("isCompleted", action.previousState)
+            }
+            is GroceryAction.SortBySection -> {
+                val batch = db.batch()
+                action.previousOrders.forEach { (id, order) ->
+                    batch.update(collection.document(id), "order", order)
+                }
+                batch.commit()
+                    .addOnSuccessListener { Log.d("GroceryRepository", "Undo sort successful") }
+                    .addOnFailureListener { e -> Log.e("GroceryRepository", "Undo sort failed", e) }
             }
             null -> {
                 Log.d("GroceryRepository", "No action to undo")

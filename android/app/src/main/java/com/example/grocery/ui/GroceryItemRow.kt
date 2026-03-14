@@ -10,11 +10,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -24,8 +26,10 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -63,6 +67,7 @@ fun GroceryItemRow(
     onAddNewItem: () -> Unit = {},
     onAddMultipleItems: (List<String>) -> Unit = {},
     focusRequester: FocusRequester? = null,
+    isLoadingSection: Boolean = false,
     modifier: Modifier = Modifier,
     dragModifier: Modifier = Modifier
 ) {
@@ -182,6 +187,22 @@ fun GroceryItemRow(
             }
         )
 
+        // Section tag slot — spinner while Gemini is loading, chip once classified
+        if (isLoadingSection) {
+            Spacer(modifier = Modifier.width(6.dp))
+            CircularProgressIndicator(
+                modifier = Modifier.size(18.dp),
+                strokeWidth = 2.dp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+            )
+        } else {
+            val sectionLabel = sectionDisplayLabel(item.section)
+            if (sectionLabel != null) {
+                Spacer(modifier = Modifier.width(6.dp))
+                SectionTag(label = sectionLabel, section = item.section)
+            }
+        }
+
         if (isSelected) {
             androidx.compose.material3.IconButton(onClick = { onDelete(item) }) {
                 Icon(
@@ -192,4 +213,42 @@ fun GroceryItemRow(
             }
         }
     }
+}
+
+/** Returns a human-readable label for the section, or null if it shouldn't show a tag. */
+private fun sectionDisplayLabel(section: String): String? = when (section.uppercase()) {
+    "BREAD"        -> "Bread"
+    "PRODUCE"      -> "Produce"
+    "DAIRY_SNACKS" -> "Dairy & Snacks"
+    "MEAT"         -> "Meat"
+    "FROZEN"       -> "Frozen"
+    "CHEESE"       -> "Cheese"
+    "ALCOHOL"      -> "Alcohol"
+    else           -> null  // "OTHER" and empty string show no tag
+}
+
+/** Colors associated with each grocery section. */
+private fun sectionColors(section: String): Pair<Color, Color> = when (section.uppercase()) {
+    "BREAD"        -> Pair(Color(0xFFF5A623), Color.White)
+    "PRODUCE"      -> Pair(Color(0xFF43A047), Color.White)
+    "DAIRY_SNACKS" -> Pair(Color(0xFF29B6F6), Color.White)
+    "MEAT"         -> Pair(Color(0xFFEF5350), Color.White)
+    "FROZEN"       -> Pair(Color(0xFF00BCD4), Color.White)
+    "CHEESE"       -> Pair(Color(0xFFFDD835), Color(0xFF424242))
+    "ALCOHOL"      -> Pair(Color(0xFF7B1FA2), Color.White)
+    else           -> Pair(Color(0xFF9E9E9E), Color.White)
+}
+
+@Composable
+fun SectionTag(label: String, section: String) {
+    val (bgColor, textColor) = sectionColors(section)
+    Text(
+        text = label,
+        fontSize = 10.sp,
+        fontWeight = FontWeight.SemiBold,
+        color = textColor,
+        modifier = Modifier
+            .background(color = bgColor, shape = RoundedCornerShape(50))
+            .padding(horizontal = 8.dp, vertical = 3.dp)
+    )
 }
