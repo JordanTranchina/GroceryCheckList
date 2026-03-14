@@ -44,7 +44,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -107,6 +109,7 @@ fun GroceryListScreen(
     var isCompletedExpanded by remember { mutableStateOf(true) }
     var selectedItemId by remember { mutableStateOf<String?>(null) }
     var showMenu by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -134,8 +137,10 @@ fun GroceryListScreen(
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.sort_by_section)) },
                                 onClick = {
-                                    repository.sortBySection(activeItems)
                                     showMenu = false
+                                    coroutineScope.launch {
+                                        repository.sortBySection(activeItems)
+                                    }
                                 }
                             )
                             DropdownMenuItem(

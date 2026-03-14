@@ -2,7 +2,7 @@ package com.example.grocery.data
 
 import android.util.Log
 import com.example.grocery.model.GroceryItem
-import com.example.grocery.util.AisleSorter
+import com.example.grocery.util.GeminiAisleSorter
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.channels.awaitClose
@@ -13,6 +13,7 @@ import java.util.Date
 class GroceryRepository {
     private val db = FirebaseFirestore.getInstance()
     private val collection = db.collection("groceries")
+    private val geminiAisleSorter = GeminiAisleSorter()
 
     sealed class GroceryAction {
         data class DeleteItem(val item: GroceryItem) : GroceryAction()
@@ -129,10 +130,10 @@ class GroceryRepository {
         }
     }
 
-    fun sortBySection(items: List<GroceryItem>) {
+    suspend fun sortBySection(items: List<GroceryItem>) {
         if (items.isEmpty()) return
         lastAction = GroceryAction.SortBySection(items.associate { it.id to it.order })
-        val sortedItems = AisleSorter.sortItems(items)
+        val sortedItems = geminiAisleSorter.sortItems(items)
         updateOrders(sortedItems)
     }
 
