@@ -9,7 +9,7 @@ import org.json.JSONObject
 class GeminiAisleSorter {
 
     private val model = GenerativeModel(
-        modelName = "gemini-1.5-flash",
+        modelName = "gemini-2.5-flash",
         apiKey = BuildConfig.GEMINI_API_KEY
     )
 
@@ -26,27 +26,47 @@ class GeminiAisleSorter {
 
     /**
      * Classifies all items in a single Gemini API call and returns them sorted by
-     * section priority. Falls back to keyword-based [AisleSorter] on any error.
+     * section priority alongside a name→section map for persistence.
+     * Falls back to keyword-based [AisleSorter] on any error.
      */
-    suspend fun sortItems(items: List<GroceryItem>): List<GroceryItem> {
-        if (items.isEmpty()) return items
+    suspend fun sortItemsWithSections(items: List<GroceryItem>): Pair<List<GroceryItem>, Map<String, String>> {
+        if (items.isEmpty()) return Pair(items, emptyMap())
+        
         return try {
             val sections = classifyItems(items.map { it.name })
-            items.sortedWith(
+            if (sections.isEmpty()) {
+                throw Exception("Gemini returned no classifications")
+            }
+            
+            val sorted = items.sortedWith(
                 compareBy(
                     { sectionPriority[sections[it.name] ?: "OTHER"] ?: Int.MAX_VALUE },
                     { items.indexOf(it) }
                 )
             )
+            Pair(sorted, sections)
         } catch (e: Exception) {
-            Log.w("GeminiAisleSorter", "Gemini classification failed, falling back to keyword matching", e)
-            AisleSorter.sortItems(items)
+            Log.w("GeminiAisleSorter", "Gemini classification failed: ${e.message}. Falling back to keyword matching", e)
+            val sorted = AisleSorter.sortItems(items)
+            val sections = items.associate { it.name to AisleSorter.getSectionFor(it.name).name }
+            Pair(sorted, sections)
         }
     }
 
+    /** Convenience wrapper that only returns the sorted list. */
+    suspend fun sortItems(items: List<GroceryItem>): List<GroceryItem> =
+        sortItemsWithSections(items).first
+
     private suspend fun classifyItems(names: List<String>): Map<String, String> {
         val prompt = buildPrompt(names)
-        val response = model.generateContent(prompt)
+        // SDK calls can throw exceptions directly
+        val response = try {
+            model.generateContent(prompt)
+        } catch (e: Exception) {
+            Log.e("GeminiAisleSorter", "Error during generateContent", e)
+            return emptyMap()
+        }
+        
         val text = response.text ?: return emptyMap()
         return parseJsonResponse(text, names)
     }
@@ -78,15 +98,20 @@ class GeminiAisleSorter {
     }
 
     private fun parseJsonResponse(text: String, names: List<String>): Map<String, String> {
-        val cleaned = text.trim()
-            .removePrefix("```json")
-            .removePrefix("```")
-            .removeSuffix("```")
-            .trim()
+        return try {
+            val cleaned = text.trim()
+                .removePrefix("```json")
+                .removePrefix("```")
+                .removeSuffix("```")
+                .trim()
 
-        val json = JSONObject(cleaned)
-        return names.associateWith { name ->
-            json.optString(name, "OTHER").uppercase()
+            val json = JSONObject(cleaned)
+            names.associateWith { name ->
+                json.optString(name, "OTHER").uppercase()
+            }
+        } catch (e: Exception) {
+            Log.e("GeminiAisleSorter", "Error parsing JSON response: $text", e)
+            emptyMap()
         }
     }
 }

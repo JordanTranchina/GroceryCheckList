@@ -74,22 +74,22 @@ fun GroceryListScreen(
     modifier: Modifier = Modifier
 ) {
     val items by repository.items.collectAsState(initial = emptyList())
-    // ... existing variable declarations ...
+    
     var newItemName by remember { mutableStateOf("") }
     var focusedItemId by remember { mutableStateOf<String?>(null) }
     
-    // Sort: Unchecked first (by order), then Checked
+    // Unchecked first (by order), then Checked
     var activeItems by remember { mutableStateOf<List<GroceryItem>>(emptyList()) }
     
-    val currentItems = items.filter { !it.isCompleted }.sortedBy { it.order }
+    val currentItems = remember(items) { items.filter { !it.isCompleted }.sortedBy { it.order } }
     
+    // Only update activeItems when the underlying data changes significantly
     androidx.compose.runtime.LaunchedEffect(currentItems) {
         activeItems = currentItems
     }
 
     val state = rememberReorderableLazyListState(
         onMove = { from, to ->
-            // FIX: Ensure we stay within bounds of activeItems
             val fromIndex = from.index
             val toIndex = to.index
             
@@ -104,7 +104,7 @@ fun GroceryListScreen(
         }
     )
 
-    val completedItems = items.filter { it.isCompleted }.sortedBy { it.order }
+    val completedItems = remember(items) { items.filter { it.isCompleted }.sortedBy { it.order } }
     
     var isCompletedExpanded by remember { mutableStateOf(true) }
     var selectedItemId by remember { mutableStateOf<String?>(null) }
@@ -139,7 +139,8 @@ fun GroceryListScreen(
                                 onClick = {
                                     showMenu = false
                                     coroutineScope.launch {
-                                        repository.sortBySection(activeItems)
+                                        // Use currentItems for the source of truth when sorting
+                                        repository.sortBySection(currentItems)
                                     }
                                 }
                             )
@@ -183,18 +184,11 @@ fun GroceryListScreen(
                         confirmValueChange = { dismissValue ->
                             when (dismissValue) {
                                 SwipeToDismissBoxValue.EndToStart -> {
-                                    // Swipe Left -> Delete
                                     repository.deleteItem(item)
-                                    activeItems = activeItems.filter { it.id != item.id }
-                                    if (selectedItemId == item.id) selectedItemId = null
                                     true
                                 }
                                 SwipeToDismissBoxValue.StartToEnd -> {
-                                    // Swipe Right -> Toggle Completion (Mark as Done)
                                     repository.toggleCompletion(item)
-                                    // Optimistic update: remove from active list instantly
-                                    activeItems = activeItems.filter { it.id != item.id }
-                                    if (selectedItemId == item.id) selectedItemId = null
                                     true
                                 }
                                 else -> false
@@ -209,8 +203,8 @@ fun GroceryListScreen(
                         enableDismissFromEndToStart = true,
                         backgroundContent = {
                             val color = when (dismissState.dismissDirection) {
-                                SwipeToDismissBoxValue.StartToEnd -> Color(0xFF4CAF50) // Green
-                                SwipeToDismissBoxValue.EndToStart -> Color(0xFFE53935) // Red
+                                SwipeToDismissBoxValue.StartToEnd -> Color(0xFF4CAF50)
+                                SwipeToDismissBoxValue.EndToStart -> Color(0xFFE53935)
                                 else -> Color.Transparent
                             }
                             val alignment = when (dismissState.dismissDirection) {
@@ -220,7 +214,7 @@ fun GroceryListScreen(
                             }
                             val icon = when (dismissState.dismissDirection) {
                                 SwipeToDismissBoxValue.StartToEnd -> Icons.Default.Check
-                                SwipeToDismissBoxValue.EndToStart -> Icons.Default.Close // Or Delete icon
+                                SwipeToDismissBoxValue.EndToStart -> Icons.Default.Close
                                 else -> null
                             }
 
@@ -252,11 +246,7 @@ fun GroceryListScreen(
                              GroceryItemRow(
                                 item = item,
                                 onToggle = { repository.toggleCompletion(it) },
-                                onDelete = { 
-                                    repository.deleteItem(it)
-                                    activeItems = activeItems.filter { i -> i.id != it.id }
-                                    if (selectedItemId == it.id) selectedItemId = null
-                                },
+                                onDelete = { repository.deleteItem(it) },
                                 onNameChange = { item, newName -> 
                                     repository.updateName(item, newName)
                                 },
@@ -274,7 +264,7 @@ fun GroceryListScreen(
                                 focusRequester = focusRequester,
                                 modifier = Modifier
                                     .animateItemPlacement()
-                                    .padding(vertical = if(isDragging) 4.dp else 0.dp), // add minimal spacing during drag
+                                    .padding(vertical = if(isDragging) 4.dp else 0.dp),
                                 dragModifier = Modifier.detectReorderAfterLongPress(state)
                             )
                         }
@@ -329,10 +319,7 @@ fun GroceryListScreen(
                          GroceryItemRow(
                             item = item,
                             onToggle = { repository.toggleCompletion(it) },
-                            onDelete = { 
-                                repository.deleteItem(it)
-                                if (selectedItemId == it.id) selectedItemId = null
-                            },
+                            onDelete = { repository.deleteItem(it) },
                             onNameChange = { item, newName -> 
                                 repository.updateName(item, newName)
                             },

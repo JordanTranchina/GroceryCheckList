@@ -133,8 +133,8 @@ class GroceryRepository {
     suspend fun sortBySection(items: List<GroceryItem>) {
         if (items.isEmpty()) return
         lastAction = GroceryAction.SortBySection(items.associate { it.id to it.order })
-        val sortedItems = geminiAisleSorter.sortItems(items)
-        updateOrders(sortedItems)
+        val (sortedItems, sections) = geminiAisleSorter.sortItemsWithSections(items)
+        updateOrdersAndSections(sortedItems, sections)
     }
 
     fun updateOrders(items: List<GroceryItem>) {
@@ -148,6 +148,20 @@ class GroceryRepository {
         batch.commit()
             .addOnSuccessListener { Log.d("GroceryRepository", "Batch order update successful") }
             .addOnFailureListener { e -> Log.e("GroceryRepository", "Batch order update failed", e) }
+    }
+
+    fun updateOrdersAndSections(items: List<GroceryItem>, sections: Map<String, String>) {
+        val batch = db.batch()
+        items.forEachIndexed { index, item ->
+            if (item.id.isNotEmpty()) {
+                val ref = collection.document(item.id)
+                val section = sections[item.name] ?: "OTHER"
+                batch.update(ref, mapOf("order" to index, "section" to section))
+            }
+        }
+        batch.commit()
+            .addOnSuccessListener { Log.d("GroceryRepository", "Batch order+section update successful") }
+            .addOnFailureListener { e -> Log.e("GroceryRepository", "Batch order+section update failed", e) }
     }
 
     fun undoLastAction() {

@@ -21,13 +21,13 @@ object AisleSorter {
     )
 
     private val produceKeywords = listOf(
-        "apple", "banana", "orange", "grape", "strawberry", "blueberry",
+        "apple", "banana", "orange", "grape", "strawberr", "blueberr",
         "lemon", "lime", "avocado", "tomato", "lettuce", "spinach", "kale",
         "carrot", "celery", "broccoli", "cucumber", "pepper", "onion", "garlic",
         "potato", "mushroom", "zucchini", "berry", "fruit", "vegetable", "salad",
-        "herb", "ginger", "raspberry", "blackberry", "cherry", "peach", "pear",
-        "plum", "mango", "melon", "watermelon", "pineapple", "kiwi", "papaya",
-        "cauliflower", "cabbage", "corn", "beet", "squash", "yam", "arugula",
+        "herb", "ginger", "raspberr", "blackberr", "cranberr", "cherry", "cherries",
+        "peach", "pear", "plum", "mango", "melon", "watermelon", "pineapple", "kiwi",
+        "papaya", "cauliflower", "cabbage", "corn", "beet", "squash", "yam", "arugula",
         "cilantro", "parsley", "basil", "mint"
     )
 
