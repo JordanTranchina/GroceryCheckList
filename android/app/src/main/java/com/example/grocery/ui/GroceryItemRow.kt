@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -66,6 +67,7 @@ fun GroceryItemRow(
     onAddNewItem: () -> Unit = {},
     onAddMultipleItems: (List<String>) -> Unit = {},
     focusRequester: FocusRequester? = null,
+    isLoadingSection: Boolean = false,
     modifier: Modifier = Modifier,
     dragModifier: Modifier = Modifier
 ) {
@@ -185,11 +187,20 @@ fun GroceryItemRow(
             }
         )
 
-        // Section tag — only shown when a section has been assigned (not empty or OTHER)
-        val sectionLabel = sectionDisplayLabel(item.section)
-        if (sectionLabel != null) {
+        // Section tag slot — spinner while Gemini is loading, chip once classified
+        if (isLoadingSection) {
             Spacer(modifier = Modifier.width(6.dp))
-            SectionTag(label = sectionLabel, section = item.section)
+            CircularProgressIndicator(
+                modifier = Modifier.size(18.dp),
+                strokeWidth = 2.dp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+            )
+        } else {
+            val sectionLabel = sectionDisplayLabel(item.section)
+            if (sectionLabel != null) {
+                Spacer(modifier = Modifier.width(6.dp))
+                SectionTag(label = sectionLabel, section = item.section)
+            }
         }
 
         if (isSelected) {

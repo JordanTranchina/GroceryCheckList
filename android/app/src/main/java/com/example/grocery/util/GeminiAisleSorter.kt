@@ -13,7 +13,7 @@ class GeminiAisleSorter {
         apiKey = BuildConfig.GEMINI_API_KEY
     )
 
-    private val sectionPriority = mapOf(
+    private val sectionPriority: Map<String, Int> = mapOf(
         "BREAD" to 0,
         "PRODUCE" to 1,
         "DAIRY_SNACKS" to 2,
@@ -24,42 +24,28 @@ class GeminiAisleSorter {
         "OTHER" to Int.MAX_VALUE
     )
 
-    /**
-     * Classifies all items in a single Gemini API call and returns them sorted by
-     * section priority alongside a name→section map for persistence.
-     * Falls back to keyword-based [AisleSorter] on any error.
-     */
     suspend fun sortItemsWithSections(items: List<GroceryItem>): Pair<List<GroceryItem>, Map<String, String>> {
         if (items.isEmpty()) return Pair(items, emptyMap())
         
         return try {
             val sections = classifyItems(items.map { it.name })
-            if (sections.isEmpty()) {
-                throw Exception("Gemini returned no classifications")
-            }
             
             val sorted = items.sortedWith(
-                compareBy(
-                    { sectionPriority[sections[it.name] ?: "OTHER"] ?: Int.MAX_VALUE },
-                    { items.indexOf(it) }
-                )
+                compareBy<GroceryItem> { sectionPriority[sections[it.name] ?: "OTHER"] ?: Int.MAX_VALUE }
+                    .thenBy { it.name }
             )
             Pair(sorted, sections)
         } catch (e: Exception) {
-            Log.w("GeminiAisleSorter", "Gemini classification failed: ${e.message}. Falling back to keyword matching", e)
-            val sorted = AisleSorter.sortItems(items)
-            val sections = items.associate { it.name to AisleSorter.getSectionFor(it.name).name }
-            Pair(sorted, sections)
+            Log.w("GeminiAisleSorter", "Gemini classification failed: ${e.message}", e)
+            Pair(items.sortedBy { it.name }, emptyMap())
         }
     }
 
-    /** Convenience wrapper that only returns the sorted list. */
     suspend fun sortItems(items: List<GroceryItem>): List<GroceryItem> =
         sortItemsWithSections(items).first
 
     private suspend fun classifyItems(names: List<String>): Map<String, String> {
         val prompt = buildPrompt(names)
-        // SDK calls can throw exceptions directly
         val response = try {
             model.generateContent(prompt)
         } catch (e: Exception) {
@@ -68,29 +54,31 @@ class GeminiAisleSorter {
         }
         
         val text = response.text ?: return emptyMap()
+        Log.d("GeminiAisleSorter", "Raw Gemini Response: $text")
         return parseJsonResponse(text, names)
     }
 
     private fun buildPrompt(names: List<String>): String {
-        val itemList = names.joinToString("\n") { "- $it" }
+        val itemList = names.joinToString("\n") { it }
         return """
-            You are classifying grocery store items into store sections for efficient shopping.
+            You are a grocery store organization expert.
             Classify each item into exactly one of these section labels:
             BREAD, PRODUCE, DAIRY_SNACKS, MEAT, FROZEN, CHEESE, ALCOHOL, OTHER
 
             Section guide:
-            - BREAD: bread, bagels, rolls, buns, tortillas, pita, croissants, loaves
+            - BREAD: bread, bagels, rolls, buns, tortillas, pita, croissants, loaves, sourdough
             - PRODUCE: fresh fruits, fresh vegetables, herbs, salad greens
             - DAIRY_SNACKS: milk (including almond milk, oat milk), yogurt, butter, cream,
-              sour cream, chips, crackers, popcorn, nuts, granola, cookies, candy
+              sour cream, chips, crackers, popcorn, nuts, granola, cookies, candy, mayo, condiments
             - MEAT: all meats, poultry, seafood, deli items, bacon, sausage
             - FROZEN: frozen foods, ice cream, popsicles, frozen meals
             - CHEESE: all cheeses (cheddar, mozzarella, brie, cream cheese, etc.)
             - ALCOHOL: beer, wine, spirits, cider, liquor
-            - OTHER: cleaning supplies, paper goods, personal care, anything else
+            - OTHER: anything else
 
-            Respond ONLY with a valid JSON object mapping each item name exactly as given to
-            its section label. No markdown fences, no explanation, just the raw JSON object.
+            Respond ONLY with a valid JSON object. 
+            The keys must be the EXACT item names provided below, including any leading numbers or units (e.g. "1 orange").
+            Do not change the item names. Do not add markdown fences.
 
             Items to classify:
             $itemList
@@ -106,11 +94,42 @@ class GeminiAisleSorter {
                 .trim()
 
             val json = JSONObject(cleaned)
-            names.associateWith { name ->
-                json.optString(name, "OTHER").uppercase()
+            val jsonMap = mutableMapOf<String, String>()
+            json.keys().forEach { key ->
+                jsonMap[key.lowercase().trim()] = json.getString(key).uppercase().trim()
             }
+
+            Log.d("GeminiAisleSorter", "Keys found in JSON: ${jsonMap.keys}")
+
+            val result = mutableMapOf<String, String>()
+            for (originalName in names) {
+                val searchName = originalName.lowercase().trim()
+                
+                // 1. Try exact match
+                var section = jsonMap[searchName]
+                
+                // 2. Try fuzzy match (if Gemini stripped "1 " from "1 orange")
+                if (section == null) {
+                    val matchingKey = jsonMap.keys.find { key -> 
+                        key.isNotEmpty() && (searchName.contains(key) || key.contains(searchName))
+                    }
+                    if (matchingKey != null) {
+                        section = jsonMap[matchingKey]
+                        Log.d("GeminiAisleSorter", "Fuzzy match found: '$originalName' matched to key '$matchingKey' -> $section")
+                    }
+                }
+                
+                if (section != null) {
+                    Log.d("GeminiAisleSorter", "Final assignment: '$originalName' -> $section")
+                    result[originalName] = section
+                } else {
+                    Log.w("GeminiAisleSorter", "No match found for '$originalName', defaulting to OTHER")
+                    result[originalName] = "OTHER"
+                }
+            }
+            result
         } catch (e: Exception) {
-            Log.e("GeminiAisleSorter", "Error parsing JSON response: $text", e)
+            Log.e("GeminiAisleSorter", "JSON parse error: ${e.message}")
             emptyMap()
         }
     }

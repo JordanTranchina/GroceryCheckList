@@ -111,6 +111,8 @@ fun GroceryListScreen(
     var showMenu by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
+    var isSortingInProgress by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -139,8 +141,9 @@ fun GroceryListScreen(
                                 onClick = {
                                     showMenu = false
                                     coroutineScope.launch {
-                                        // Use currentItems for the source of truth when sorting
+                                        isSortingInProgress = true
                                         repository.sortBySection(currentItems)
+                                        isSortingInProgress = false
                                     }
                                 }
                             )
@@ -262,6 +265,7 @@ fun GroceryListScreen(
                                     repository.addItems(newItems)
                                 },
                                 focusRequester = focusRequester,
+                                isLoadingSection = isSortingInProgress,
                                 modifier = Modifier
                                     .animateItemPlacement()
                                     .padding(vertical = if(isDragging) 4.dp else 0.dp),
