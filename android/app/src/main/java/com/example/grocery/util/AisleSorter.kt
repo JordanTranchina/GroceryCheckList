@@ -37,8 +37,8 @@ object AisleSorter {
     )
 
     private val dairySnacksKeywords = listOf(
-        "milk", "almond milk", "oat milk", "yogurt", "butter", "cream",
-        "sour cream", "chips", "crackers", "pretzels", "popcorn", "nuts",
+        "milk", "almond milk", "oat milk", "yogurt", "butter", "sour cream",
+        "chips", "crackers", "pretzels", "popcorn", "nuts",
         "granola", "trail mix", "cookies", "candy", "chocolate", "snack"
     )
 
@@ -62,10 +62,11 @@ object AisleSorter {
         val lower = itemName.lowercase()
         return when {
             breadKeywords.any { lower.contains(it) } -> Section.BREAD
-            produceKeywords.any { lower.contains(it) } -> Section.PRODUCE
-            // Check cheese before dairy so "cream cheese" maps to CHEESE
-            cheeseKeywords.any { lower.contains(it) } -> Section.CHEESE
+            // Check dairy/snacks before produce so "potato chips" hits "chips" before "potato"
             dairySnacksKeywords.any { lower.contains(it) } -> Section.DAIRY_SNACKS
+            // Check cheese before produce so "cheese" doesn't fall through
+            cheeseKeywords.any { lower.contains(it) } -> Section.CHEESE
+            produceKeywords.any { lower.contains(it) } -> Section.PRODUCE
             meatKeywords.any { lower.contains(it) } -> Section.MEAT
             frozenKeywords.any { lower.contains(it) } -> Section.FROZEN
             alcoholKeywords.any { lower.contains(it) } -> Section.ALCOHOL
