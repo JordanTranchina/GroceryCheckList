@@ -10,10 +10,25 @@ class GroceryViewModel: ObservableObject {
     @Published var items: [GroceryItem] = []
     @Published var fetchStatus: FetchStatus = .idle
     
-    // Project ID from your GoogleService-Info.plist
-    private let projectId = "stable-dogfish-459214-c5"
+    private var projectId: String {
+        guard let path = Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist"),
+              let dict = NSDictionary(contentsOfFile: path),
+              let projectId = dict["PROJECT_ID"] as? String else {
+            return ""
+        }
+        return projectId
+    }
+    
     private let collectionName = "groceries"
-    private let apiKey = "AIzaSyDoGCMFzr4IwOP0pfF_VSnccm1nt-Vmees"
+    
+    private var apiKey: String {
+        guard let path = Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist"),
+              let dict = NSDictionary(contentsOfFile: path),
+              let apiKey = dict["API_KEY"] as? String else {
+            return ""
+        }
+        return apiKey
+    }
     
     private var isFetching = false
     
