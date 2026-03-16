@@ -103,6 +103,7 @@ struct GroceryItemRow: View {
 }
 
 struct ContentView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @StateObject private var viewModel = GroceryViewModel()
     
     var body: some View {
@@ -119,6 +120,35 @@ struct ContentView: View {
                 }
             }
         }
+        .onChange(of: scenePhase) { newPhase in
+            if newPhase == .active {
+                viewModel.fetchItems()
+            }
+        }
+    }
+    
+    var statusIcon: String {
+        switch viewModel.fetchStatus {
+        case .idle:            return "clock"
+        case .loading:         return "arrow.trianglehead.clockwise"
+        case .loaded:          return "checkmark.circle.fill"
+        case .error:           return "exclamationmark.triangle.fill"
+        }
+    }
+    var statusColor: Color {
+        switch viewModel.fetchStatus {
+        case .idle, .loading:  return .gray
+        case .loaded:          return .green
+        case .error:           return .red
+        }
+    }
+    var statusText: String {
+        switch viewModel.fetchStatus {
+        case .idle:            return "Not started"
+        case .loading:         return "Loading…"
+        case .loaded(let n):   return "✓ \(n) items loaded — tap to refresh"
+        case .error(let msg):  return msg
+        }
     }
     
     @ViewBuilder
@@ -133,6 +163,20 @@ struct ContentView: View {
                     )
                 }
                 .onMove(perform: viewModel.moveItem)
+            }
+
+            // Debug status row — shows loading/error/count on the Watch screen
+            Section {
+                Button(action: { viewModel.fetchItems() }) {
+                    HStack {
+                        Image(systemName: statusIcon)
+                            .foregroundColor(statusColor)
+                        Text(statusText)
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                            .lineLimit(3)
+                    }
+                }
             }
             
             if !viewModel.completedItems.isEmpty {
