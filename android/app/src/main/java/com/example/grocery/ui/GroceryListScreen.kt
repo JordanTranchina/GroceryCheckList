@@ -188,10 +188,14 @@ fun GroceryListScreen(
                             when (dismissValue) {
                                 SwipeToDismissBoxValue.EndToStart -> {
                                     repository.deleteItem(item)
+                                    activeItems = activeItems.filter { i -> i.id != item.id }
+                                    if (selectedItemId == item.id) selectedItemId = null
                                     true
                                 }
                                 SwipeToDismissBoxValue.StartToEnd -> {
                                     repository.toggleCompletion(item)
+                                    activeItems = activeItems.filter { i -> i.id != item.id }
+                                    if (selectedItemId == item.id) selectedItemId = null
                                     true
                                 }
                                 else -> false
@@ -248,8 +252,15 @@ fun GroceryListScreen(
 
                              GroceryItemRow(
                                 item = item,
-                                onToggle = { repository.toggleCompletion(it) },
-                                onDelete = { repository.deleteItem(it) },
+                                onToggle = { 
+                                    repository.toggleCompletion(it)
+                                    activeItems = activeItems.filter { i -> i.id != it.id }
+                                },
+                                onDelete = { 
+                                    repository.deleteItem(it)
+                                    activeItems = activeItems.filter { i -> i.id != it.id }
+                                    if (selectedItemId == it.id) selectedItemId = null
+                                },
                                 onNameChange = { item, newName -> 
                                     repository.updateName(item, newName)
                                 },
