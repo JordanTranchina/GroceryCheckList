@@ -17,6 +17,18 @@ class GroceryViewModel: ObservableObject {
     
     private var isFetching = false
     
+    private lazy var session: URLSession = {
+        let config = URLSessionConfiguration.ephemeral
+        config.waitsForConnectivity = true
+        // WatchOS occasionally drops HTTP/2 connections to Google endpoints with errSSLClosedAbort (-9816).
+        // Adding Connection: close and explicitly accepting JSON helps mitigate these TLS handshake drops.
+        config.httpAdditionalHeaders = [
+            "Accept": "application/json",
+            "Connection": "close"
+        ]
+        return URLSession(configuration: config)
+    }()
+    
     init() {
         fetchItems()
     }
@@ -30,7 +42,7 @@ class GroceryViewModel: ObservableObject {
         isFetching = true
         DispatchQueue.main.async { self.fetchStatus = .loading }
         
-        URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+        session.dataTask(with: url) { [weak self] data, response, error in
             defer { self?.isFetching = false }
             
             if let error = error {
@@ -108,7 +120,7 @@ class GroceryViewModel: ObservableObject {
             return
         }
         
-        URLSession.shared.dataTask(with: request) { data, response, error in
+        session.dataTask(with: request) { data, response, error in
             if let error = error {
                 print("Error updating item: \(error)")
             }
@@ -150,7 +162,7 @@ class GroceryViewModel: ObservableObject {
             return
         }
         
-        URLSession.shared.dataTask(with: request) { data, response, error in
+        session.dataTask(with: request) { data, response, error in
             if let error = error {
                 print("Error moving item to bottom: \(error)")
             }
@@ -171,11 +183,10 @@ struct FirestoreDocument: Decodable {
         // Extract ID from the full path name
         let id = name.components(separatedBy: "/").last
         
-        // Parse fields
-        // Note: Firestore REST returns types like { "stringValue": "Milk" }
-        let nameValue = fields.name.stringValue
-        let isCompletedValue = fields.isCompleted.booleanValue
-        let orderValue = Int(fields.order.integerValue ?? "0") ?? 0
+        // Parse fields safely since REST API omits missing keys
+        let nameValue = fields.name?.stringValue ?? "Unknown Item"
+        let isCompletedValue = fields.isCompleted?.booleanValue ?? false
+        let orderValue = Int(fields.order?.integerValue ?? "0") ?? 0
         
         // Use current date for simplicity if createdAt is missing or complex to parse
         return GroceryItem(id: id, name: nameValue, isCompleted: isCompletedValue, order: orderValue, createdAt: Date())
@@ -183,9 +194,9 @@ struct FirestoreDocument: Decodable {
 }
 
 struct FirestoreFields: Decodable {
-    let name: StringValue
-    let isCompleted: BooleanValue
-    let order: IntegerValue
+    let name: StringValue?
+    let isCompleted: BooleanValue?
+    let order: IntegerValue?
     
     struct StringValue: Decodable { let stringValue: String }
     struct BooleanValue: Decodable { let booleanValue: Bool }
