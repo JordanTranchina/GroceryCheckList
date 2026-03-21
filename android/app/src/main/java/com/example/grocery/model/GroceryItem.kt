@@ -16,5 +16,7 @@ data class GroceryItem(
     
     var order: Int = 0,
     
-    var createdAt: Date = Date()
+    var createdAt: Date = Date(),
+
+    var section: String = ""
 )
