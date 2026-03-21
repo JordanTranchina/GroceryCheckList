@@ -24,4 +24,5 @@ DerivedData/
 # Firebase Keys (Safety first!)
 google-services.json
 GoogleService-Info.plist
+Google Service Info.plist
 *.hprof

@@ -2,50 +2,87 @@ import Foundation
 import Combine
 import SwiftUI
 
-// Mock Repository Pattern for now until simulated Firebase
-import Foundation
-import Combine
-import SwiftUI
+enum FetchStatus {
+    case idle, loading, loaded(count: Int), error(String)
+}
 
 class GroceryViewModel: ObservableObject {
     @Published var items: [GroceryItem] = []
+    @Published var fetchStatus: FetchStatus = .idle
     
-    // Project ID from your GoogleService-Info.plist
-    private let projectId = "stable-dogfish-459214-c5"
+    private var projectId: String {
+        guard let path = Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist"),
+              let dict = NSDictionary(contentsOfFile: path),
+              let projectId = dict["PROJECT_ID"] as? String else {
+            return ""
+        }
+        return projectId
+    }
+    
     private let collectionName = "groceries"
-    private var timer: Timer?
+    
+    private var apiKey: String {
+        guard let path = Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist"),
+              let dict = NSDictionary(contentsOfFile: path),
+              let apiKey = dict["API_KEY"] as? String else {
+            return ""
+        }
+        return apiKey
+    }
+    
+    private var isFetching = false
     
     init() {
         fetchItems()
-        // Poll every 10 seconds for updates
-        timer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { [weak self] _ in
-            self?.fetchItems()
-        }
-    }
-    
-    deinit {
-        timer?.invalidate()
     }
     
     func fetchItems() {
-        let urlString = "https://firestore.googleapis.com/v1/projects/\(projectId)/databases/(default)/documents/\(collectionName)"
+        guard !isFetching else { return }
+        
+        let urlString = "https://firestore.googleapis.com/v1/projects/\(projectId)/databases/(default)/documents/\(collectionName)?key=\(apiKey)"
         guard let url = URL(string: urlString) else { return }
         
+        isFetching = true
+        DispatchQueue.main.async { self.fetchStatus = .loading }
+        
         URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
-            guard let data = data, error == nil else {
-                print("Error fetching items: \(error?.localizedDescription ?? "Unknown error")")
+            defer { self?.isFetching = false }
+            
+            if let error = error {
+                let msg = error.localizedDescription
+                print("Network error: \(msg)")
+                DispatchQueue.main.async {
+                    self?.fetchStatus = .error("Network: \(msg)")
+                }
+                return
+            }
+            
+            let httpStatus = (response as? HTTPURLResponse)?.statusCode ?? -1
+            guard let data = data, httpStatus == 200 else {
+                let body = data.flatMap { String(data: $0, encoding: .utf8) } ?? "(no body)"
+                let msg = "HTTP \(httpStatus): \(body.prefix(120))"
+                print("Bad response: \(msg)")
+                // Don't show confusing 429 parsing errors if it still happens, just show rate limit message
+                let errorMsg = httpStatus == 429 ? "Rate limit reached. Trying again soon." : msg
+                DispatchQueue.main.async {
+                    self?.fetchStatus = .error(errorMsg)
+                }
                 return
             }
             
             do {
                 let result = try JSONDecoder().decode(FirestoreResponse.self, from: data)
+                let decoded = (result.documents ?? []).compactMap { $0.toGroceryItem() }
                 DispatchQueue.main.async {
-                    self?.items = (result.documents ?? []).compactMap { doc in
-                        return doc.toGroceryItem()
-                    }
+                    self?.items = decoded
+                    self?.fetchStatus = .loaded(count: decoded.count)
                 }
             } catch {
-                print("Decoding error: \(error)")
+                let msg = "Decode: \(error)"
+                print(msg)
+                DispatchQueue.main.async {
+                    self?.fetchStatus = .error(msg)
+                }
             }
         }.resume()
     }
@@ -66,7 +103,7 @@ class GroceryViewModel: ObservableObject {
             items[index].isCompleted.toggle()
         }
         
-        let urlString = "https://firestore.googleapis.com/v1/projects/\(projectId)/databases/(default)/documents/\(collectionName)/\(id)?updateMask.fieldPaths=isCompleted"
+        let urlString = "https://firestore.googleapis.com/v1/projects/\(projectId)/databases/(default)/documents/\(collectionName)/\(id)?updateMask.fieldPaths=isCompleted&key=\(apiKey)"
         guard let url = URL(string: urlString) else { return }
         
         var request = URLRequest(url: url)
@@ -90,7 +127,6 @@ class GroceryViewModel: ObservableObject {
             if let error = error {
                 print("Error updating item: \(error)")
             }
-            // Ideally revert optimistic update on failure, keeping simple for now
         }.resume()
     }
     
@@ -109,7 +145,7 @@ class GroceryViewModel: ObservableObject {
         items[index].order = newOrder
         
         // 3. Persist to Firestore
-        let urlString = "https://firestore.googleapis.com/v1/projects/\(projectId)/databases/(default)/documents/\(collectionName)/\(id)?updateMask.fieldPaths=order"
+        let urlString = "https://firestore.googleapis.com/v1/projects/\(projectId)/databases/(default)/documents/\(collectionName)/\(id)?updateMask.fieldPaths=order&key=\(apiKey)"
         guard let url = URL(string: urlString) else { return }
         
         var request = URLRequest(url: url)
