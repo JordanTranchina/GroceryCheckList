@@ -1,5 +1,6 @@
 package com.example.grocery
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -12,12 +13,25 @@ import androidx.compose.ui.Modifier
 import com.example.grocery.data.GroceryRepository
 import com.example.grocery.ui.GroceryListScreen
 import com.example.grocery.ui.theme.GroceryListTheme
+import com.example.grocery.util.PasteUtils
 
 class MainActivity : ComponentActivity() {
     private val repository = GroceryRepository() // In a real app, use Hilt/Koin injection
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (intent?.action == Intent.ACTION_SEND && intent.type == "text/plain") {
+            val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT) ?: ""
+            if (sharedText.isNotBlank()) {
+                val result = PasteUtils.processInput("", sharedText)
+                val allItems = listOfNotNull(result.updatedCurrentText.takeIf { it.isNotEmpty() }) + result.newItems
+                if (allItems.isNotEmpty()) {
+                    repository.addItems(allItems)
+                }
+            }
+        }
+
         setContent {
             GroceryListTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
