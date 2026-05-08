@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -35,6 +36,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
@@ -112,6 +114,7 @@ fun GroceryListScreen(
     val coroutineScope = rememberCoroutineScope()
 
     var isSortingInProgress by remember { mutableStateOf(false) }
+    var showDeleteAllConfirmation by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -155,6 +158,13 @@ fun GroceryListScreen(
                                 }
                             )
                             DropdownMenuItem(
+                                text = { Text(stringResource(R.string.delete_all_items)) },
+                                onClick = {
+                                    showDeleteAllConfirmation = true
+                                    showMenu = false
+                                }
+                            )
+                            DropdownMenuItem(
                                 text = { Text("Undo") },
                                 onClick = {
                                     repository.undoLastAction()
@@ -173,6 +183,23 @@ fun GroceryListScreen(
             )
         }
     ) { innerPadding ->
+        if (showDeleteAllConfirmation) {
+            AlertDialog(
+                onDismissRequest = { showDeleteAllConfirmation = false },
+                title = { Text("Delete all items?") },
+                text = { Text("This will remove all ${items.size} items from your list.") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        repository.deleteItems(items)
+                        showDeleteAllConfirmation = false
+                    }) { Text("Delete") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteAllConfirmation = false }) { Text("Cancel") }
+                }
+            )
+        }
+
         LazyColumn(
             state = state.listState,
             modifier = modifier
