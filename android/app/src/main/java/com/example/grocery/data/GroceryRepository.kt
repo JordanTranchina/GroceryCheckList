@@ -3,6 +3,7 @@ package com.example.grocery.data
 import android.util.Log
 import com.example.grocery.model.GroceryItem
 import com.example.grocery.util.GeminiAisleSorter
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.channels.awaitClose
@@ -14,6 +15,15 @@ class GroceryRepository {
     private val db = FirebaseFirestore.getInstance()
     private val collection = db.collection("groceries")
     private val geminiAisleSorter = GeminiAisleSorter()
+
+    init {
+        val auth = FirebaseAuth.getInstance()
+        if (auth.currentUser == null) {
+            auth.signInAnonymously()
+                .addOnSuccessListener { Log.d("GroceryRepository", "Signed in anonymously: ${it.user?.uid}") }
+                .addOnFailureListener { e -> Log.e("GroceryRepository", "Anonymous sign-in failed", e) }
+        }
+    }
 
     sealed class GroceryAction {
         data class DeleteItem(val item: GroceryItem) : GroceryAction()
