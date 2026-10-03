@@ -6,7 +6,7 @@ final class GroceryViewModelTests: XCTestCase {
     var viewModel: GroceryViewModel!
     
     override func setUpWithError() throws {
-        viewModel = GroceryViewModel()
+        viewModel = GroceryViewModel(storeURL: nil, autoFetch: false)
         // Initialize with some mock data if needed
         viewModel.items = [
             GroceryItem(id: "1", name: "Apple", isCompleted: false, order: 1),
@@ -74,5 +74,40 @@ final class GroceryViewModelTests: XCTestCase {
         // Then
         XCTAssertEqual(completed.count, 1)
         XCTAssertEqual(completed.first?.name, "Banana")
+    }
+
+    func testCacheRoundTrip() throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("cache-\(UUID()).json")
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        let first = GroceryViewModel(storeURL: url, autoFetch: false)
+        first.items = viewModel.items
+        first.lastSynced = Date()
+        first.toggleCompletion(item: first.items[0])
+
+        let second = GroceryViewModel(storeURL: url, autoFetch: false)
+        XCTAssertEqual(second.items.count, 3)
+        XCTAssertTrue(second.items[0].isCompleted)
+        XCTAssertNotNil(second.lastSynced)
+    }
+
+    func testPendingChangesOverrideFetchedList() {
+        viewModel.toggleCompletion(item: viewModel.items[0])
+        viewModel.moveToBottom(item: viewModel.items[2])
+
+        let fetched = [
+            GroceryItem(id: "1", name: "Apple", isCompleted: false, order: 1),
+            GroceryItem(id: "3", name: "Carrot", isCompleted: false, order: 3)
+        ]
+        let merged = viewModel.applyPending(to: fetched)
+        XCTAssertTrue(merged[0].isCompleted)
+        XCTAssertEqual(merged[1].order, 4)
+    }
+
+    func testQueueKeepsNewestChangePerField() {
+        viewModel.toggleCompletion(item: viewModel.items[0])
+        viewModel.toggleCompletion(item: viewModel.items[0])
+        let toggles = viewModel.pendingChanges.filter { $0.itemId == "1" && $0.field == .isCompleted }
+        XCTAssertLessThanOrEqual(toggles.count, 1)
     }
 }
