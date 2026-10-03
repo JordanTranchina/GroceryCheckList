@@ -132,14 +132,14 @@ struct ContentView: View {
         case .idle:            return "clock"
         case .loading:         return "arrow.trianglehead.clockwise"
         case .loaded:          return "checkmark.circle.fill"
-        case .error:           return "exclamationmark.triangle.fill"
+        case .error:           return viewModel.lastSynced == nil ? "exclamationmark.triangle.fill" : "wifi.slash"
         }
     }
     var statusColor: Color {
         switch viewModel.fetchStatus {
         case .idle, .loading:  return .gray
         case .loaded:          return .green
-        case .error:           return .red
+        case .error:           return viewModel.lastSynced == nil ? .red : .orange
         }
     }
     var statusText: String {
@@ -147,8 +147,15 @@ struct ContentView: View {
         case .idle:            return "Not started"
         case .loading:         return "Loading…"
         case .loaded(let n):   return "✓ \(n) items loaded — tap to refresh"
-        case .error(let msg):  return msg
+        case .error(let msg):
+            guard let synced = viewModel.lastSynced else { return msg }
+            return "Offline — showing list from \(synced.formatted(date: .omitted, time: .shortened))"
         }
+    }
+
+    var pendingText: String? {
+        let n = viewModel.pendingChanges.count
+        return n == 0 ? nil : "\(n) change\(n == 1 ? "" : "s") waiting to sync"
     }
     
     @ViewBuilder
@@ -168,6 +175,7 @@ struct ContentView: View {
             // Debug status row — shows loading/error/count on the Watch screen
             Section {
                 Button(action: { viewModel.fetchItems() }) {
+                    VStack(alignment: .leading) {
                     HStack {
                         Image(systemName: statusIcon)
                             .foregroundColor(statusColor)
@@ -175,6 +183,12 @@ struct ContentView: View {
                             .font(.system(size: 11))
                             .foregroundColor(.secondary)
                             .lineLimit(3)
+                    }
+                    if let pendingText = pendingText {
+                        Text(pendingText)
+                            .font(.system(size: 10))
+                            .foregroundColor(.orange)
+                    }
                     }
                 }
             }
