@@ -2,4 +2,5 @@
     <string name="app_name">Grocery List</string>
     <string name="sort_by_section">Sort by Section</string>
     <string name="delete_all_checked_items">Delete all checked items</string>
+    <string name="delete_all_items">Delete all items</string>
 </resources>

@@ -138,6 +138,34 @@ class GroceryRepositoryTest {
     }
 
     @Test
+    fun `deleteItems with mixed active and completed items records DeleteItems action`() {
+        // Arrange
+        val items = listOf(
+            GroceryItem("id1", "Milk", false, 0, Date()),
+            GroceryItem("id2", "Eggs", true, 1, Date()),
+            GroceryItem("id3", "Bread", true, 2, Date())
+        )
+
+        // Act
+        testRepository.deleteItems(items)
+
+        // Assert
+        val action = testRepository.lastAction
+        assertTrue(action is GroceryRepository.GroceryAction.DeleteItems)
+        action as GroceryRepository.GroceryAction.DeleteItems
+        assertEquals(items, action.items)
+    }
+
+    @Test
+    fun `deleteItems with empty list does not record action`() {
+        // Act
+        testRepository.deleteItems(emptyList())
+
+        // Assert
+        assertNull(testRepository.lastAction)
+    }
+
+    @Test
     fun `undoLastAction clears lastAction`() {
         // Arrange
         val item = GroceryItem("id1", "Milk", false, 0, Date())

@@ -2,6 +2,7 @@ package com.example.grocery
 
 
 
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -79,5 +80,77 @@ class GroceryListScreenTest {
 
         // Assert
         verify(exactly = 1) { repository.undoLastAction() }
+    }
+
+    @Test
+    fun deleteAllItems_menuItem_isVisible() {
+        val repository = mockk<GroceryRepository>(relaxed = true)
+        every { repository.items } returns flowOf(listOf(GroceryItem("id1", "Milk", false, 0, Date())))
+
+        composeTestRule.setContent {
+            GroceryListScreen(repository = repository)
+        }
+
+        composeTestRule.onNodeWithContentDescription("Menu").performClick()
+
+        composeTestRule.onNodeWithText("Delete all items").assertIsDisplayed()
+    }
+
+    @Test
+    fun deleteAllItems_showsConfirmationDialog_andDoesNotDeleteImmediately() {
+        val repository = mockk<GroceryRepository>(relaxed = true)
+        every { repository.items } returns flowOf(listOf(GroceryItem("id1", "Milk", false, 0, Date())))
+
+        composeTestRule.setContent {
+            GroceryListScreen(repository = repository)
+        }
+
+        composeTestRule.onNodeWithContentDescription("Menu").performClick()
+        composeTestRule.onNodeWithText("Delete all items").performClick()
+
+        composeTestRule.onNodeWithText("Delete all items?").assertIsDisplayed()
+        verify(exactly = 0) { repository.deleteItems(any()) }
+    }
+
+    @Test
+    fun deleteAllItems_cancelDoesNotCallDeleteItems() {
+        val repository = mockk<GroceryRepository>(relaxed = true)
+        every { repository.items } returns flowOf(listOf(GroceryItem("id1", "Milk", false, 0, Date())))
+
+        composeTestRule.setContent {
+            GroceryListScreen(repository = repository)
+        }
+
+        composeTestRule.onNodeWithContentDescription("Menu").performClick()
+        composeTestRule.onNodeWithText("Delete all items").performClick()
+        composeTestRule.onNodeWithText("Cancel").performClick()
+
+        verify(exactly = 0) { repository.deleteItems(any()) }
+    }
+
+    @Test
+    fun deleteAllItems_confirmCallsDeleteItemsWithAllItems() {
+        val repository = mockk<GroceryRepository>(relaxed = true)
+
+        val activeItem = GroceryItem("id1", "Milk", false, 0, Date())
+        val completedItem1 = GroceryItem("id2", "Eggs", true, 1, Date())
+        val completedItem2 = GroceryItem("id3", "Bread", true, 2, Date())
+        val allItems = listOf(activeItem, completedItem1, completedItem2)
+
+        every { repository.items } returns flowOf(allItems)
+
+        composeTestRule.setContent {
+            GroceryListScreen(repository = repository)
+        }
+
+        composeTestRule.onNodeWithContentDescription("Menu").performClick()
+        composeTestRule.onNodeWithText("Delete all items").performClick()
+        composeTestRule.onNodeWithText("Delete").performClick()
+
+        verify {
+            repository.deleteItems(match { items ->
+                items.size == 3 && items.containsAll(allItems)
+            })
+        }
     }
 }
