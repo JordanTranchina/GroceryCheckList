@@ -1,4 +1,5 @@
 import SwiftUI
+import WatchKit
 
 struct GroceryItemRow: View {
     let item: GroceryItem
@@ -7,36 +8,30 @@ struct GroceryItemRow: View {
     
     @State private var offset: CGFloat = 0
     @State private var isCompleting = false
+
+    static let revealPoint: CGFloat = 30
+    static let commitPoint: CGFloat = 70
+    static let fadeDistance: CGFloat = 15
+    static let iconWidth: CGFloat = 24
     
     var body: some View {
         ZStack {
-            // Background Layer for Swipe Actions
-            if offset != 0 {
-                GeometryReader { geometry in
-                    HStack {
-                        if offset > 0 {
-                            // Swiping Right -> Complete (Green)
-                            ZStack(alignment: .leading) {
-                                Color.green
-                                Image(systemName: "checkmark")
-                                    .font(.title3)
-                                    .padding(.leading, 12)
-                                    .foregroundColor(.white)
-                            }
-                        } else {
-                            // Swiping Left -> Bottom (Blue)
-                            ZStack(alignment: .trailing) {
-                                Color.blue
-                                Image(systemName: "arrow.bottom.to.line")
-                                    .font(.title3)
-                                    .padding(.trailing, 12)
-                                    .foregroundColor(.white)
-                            }
-                        }
-                    }
+            // Background Layer for Swipe Actions.
+            // The color stays hidden until the row passes revealPoint, then fades in.
+            // The icon's outer edge sits at commitPoint, so a fully uncovered icon means release will commit.
+            if abs(offset) > Self.revealPoint {
+                ZStack(alignment: offset > 0 ? .leading : .trailing) {
+                    (offset > 0 ? Color.green : Color.blue)
+                    Image(systemName: offset > 0 ? "checkmark" : "arrow.bottom.to.line")
+                        .font(.title3)
+                        .foregroundColor(.white)
+                        .frame(width: Self.iconWidth)
+                        .scaleEffect(abs(offset) >= Self.commitPoint ? 1.0 : 0.7)
+                        .padding(offset > 0 ? .leading : .trailing, Self.commitPoint - Self.iconWidth)
                 }
+                .opacity(Double(min(1, (abs(offset) - Self.revealPoint) / Self.fadeDistance)))
             }
-            
+
             // Content Layer
             HStack {
                 Image(systemName: item.isCompleted ? "checkmark.square.fill" : "square")
@@ -74,17 +69,21 @@ struct GroceryItemRow: View {
                 DragGesture()
                     .onChanged { gesture in
                         // Add some resistance or limit
+                        let newOffset = gesture.translation.width
+                        if (abs(offset) < Self.commitPoint) != (abs(newOffset) < Self.commitPoint) {
+                            WKInterfaceDevice.current().play(.click)
+                        }
                         withAnimation(.interactiveSpring()) {
-                            offset = gesture.translation.width
+                            offset = newOffset
                         }
                     }
                     .onEnded { gesture in
                         withAnimation(.spring()) {
-                            if offset > 70 {
+                            if offset >= Self.commitPoint {
                                 // Threshold met: Complete
                                 onToggle(item)
                                 offset = 0
-                            } else if offset < -70 {
+                            } else if offset <= -Self.commitPoint {
                                 // Threshold met: Move to Bottom
                                 onMoveToBottom(item)
                                 offset = 0
