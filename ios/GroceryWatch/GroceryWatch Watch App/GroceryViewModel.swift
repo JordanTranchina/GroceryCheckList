@@ -159,11 +159,11 @@ class GroceryViewModel: ObservableObject {
 }
 
 // REST API Helper Models
-struct FirestoreResponse: Decodable {
+nonisolated struct FirestoreResponse: Decodable {
     let documents: [FirestoreDocument]?
 }
 
-struct FirestoreDocument: Decodable {
+nonisolated struct FirestoreDocument: Decodable {
     let name: String // Full path: projects/.../databases/.../documents/groceries/ID
     let fields: FirestoreFields
     
@@ -182,7 +182,7 @@ struct FirestoreDocument: Decodable {
     }
 }
 
-struct FirestoreFields: Decodable {
+nonisolated struct FirestoreFields: Decodable {
     let name: StringValue
     let isCompleted: BooleanValue
     let order: IntegerValue

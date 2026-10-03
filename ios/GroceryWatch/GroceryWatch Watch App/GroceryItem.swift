@@ -1,6 +1,6 @@
 import Foundation
 
-struct GroceryItem: Identifiable, Codable {
+nonisolated struct GroceryItem: Identifiable, Codable {
     var id: String?
     var name: String
     var isCompleted: Bool
