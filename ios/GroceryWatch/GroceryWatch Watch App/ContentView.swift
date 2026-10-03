@@ -120,7 +120,7 @@ struct ContentView: View {
                 }
             }
         }
-        .onChange(of: scenePhase) { newPhase in
+        .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
                 viewModel.fetchItems()
             }
