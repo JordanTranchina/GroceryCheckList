@@ -228,7 +228,7 @@ fun GroceryListScreen(
                                 else -> false
                             }
                         },
-                        positionalThreshold = { totalDistance -> totalDistance * 0.75f }
+                        positionalThreshold = { totalDistance -> totalDistance * SWIPE_COMMIT_FRACTION }
                     )
 
                     SwipeToDismissBox(
@@ -236,35 +236,42 @@ fun GroceryListScreen(
                         enableDismissFromStartToEnd = true,
                         enableDismissFromEndToStart = true,
                         backgroundContent = {
-                            val color = when (dismissState.dismissDirection) {
-                                SwipeToDismissBoxValue.StartToEnd -> Color(0xFF4CAF50)
-                                SwipeToDismissBoxValue.EndToStart -> Color(0xFFE53935)
-                                else -> Color.Transparent
-                            }
-                            val alignment = when (dismissState.dismissDirection) {
-                                SwipeToDismissBoxValue.StartToEnd -> Alignment.CenterStart
-                                SwipeToDismissBoxValue.EndToStart -> Alignment.CenterEnd
-                                else -> Alignment.Center
-                            }
-                            val icon = when (dismissState.dismissDirection) {
-                                SwipeToDismissBoxValue.StartToEnd -> Icons.Default.Check
-                                SwipeToDismissBoxValue.EndToStart -> Icons.Default.Close
-                                else -> null
-                            }
+                            // Same ratios as the watch (30 pt reveal, 70 pt commit on a ~185 pt row):
+                            // the color stays hidden until the reveal point, then fades in.
+                            androidx.compose.foundation.layout.BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                                val width = constraints.maxWidth.toFloat()
+                                val offset = kotlin.math.abs(runCatching { dismissState.requireOffset() }.getOrDefault(0f))
+                                val revealAlpha = ((offset - width * SWIPE_REVEAL_FRACTION) / (width * SWIPE_FADE_FRACTION)).coerceIn(0f, 1f)
+                                val color = when (dismissState.dismissDirection) {
+                                    SwipeToDismissBoxValue.StartToEnd -> Color(0xFF4CAF50)
+                                    SwipeToDismissBoxValue.EndToStart -> Color(0xFFE53935)
+                                    else -> Color.Transparent
+                                }
+                                val alignment = when (dismissState.dismissDirection) {
+                                    SwipeToDismissBoxValue.StartToEnd -> Alignment.CenterStart
+                                    SwipeToDismissBoxValue.EndToStart -> Alignment.CenterEnd
+                                    else -> Alignment.Center
+                                }
+                                val icon = when (dismissState.dismissDirection) {
+                                    SwipeToDismissBoxValue.StartToEnd -> Icons.Default.Check
+                                    SwipeToDismissBoxValue.EndToStart -> Icons.Default.Close
+                                    else -> null
+                                }
 
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(color)
-                                    .padding(horizontal = 20.dp),
-                                contentAlignment = alignment
-                            ) {
-                                if (icon != null) {
-                                    Icon(
-                                        imageVector = icon,
-                                        contentDescription = "Action",
-                                        tint = Color.White
-                                    )
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(color.copy(alpha = color.alpha * revealAlpha))
+                                        .padding(horizontal = 20.dp),
+                                    contentAlignment = alignment
+                                ) {
+                                    if (icon != null && revealAlpha > 0f) {
+                                        Icon(
+                                            imageVector = icon,
+                                            contentDescription = "Action",
+                                            tint = Color.White.copy(alpha = revealAlpha)
+                                        )
+                                    }
                                 }
                             }
                         },
@@ -400,3 +407,8 @@ fun AddListButton(
         )
     }
 }
+
+// Swipe thresholds as fractions of row width. They match the watch: 30 pt reveal and 70 pt commit on a ~185 pt row.
+private const val SWIPE_REVEAL_FRACTION = 30f / 185f
+private const val SWIPE_COMMIT_FRACTION = 70f / 185f
+private const val SWIPE_FADE_FRACTION = 15f / 185f
