@@ -22,7 +22,7 @@ struct GroceryItemRow: View {
             if abs(offset) > Self.revealPoint {
                 ZStack(alignment: offset > 0 ? .leading : .trailing) {
                     (offset > 0 ? Color.green : Color.blue)
-                    Image(systemName: offset > 0 ? "checkmark" : "arrow.bottom.to.line")
+                    Image(systemName: offset > 0 ? "checkmark" : "arrow.down.to.line")
                         .font(.title3)
                         .foregroundColor(.white)
                         .frame(width: Self.iconWidth)
