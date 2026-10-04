@@ -13,6 +13,10 @@ struct GroceryItemRow: View {
     static let commitPoint: CGFloat = 70
     static let fadeDistance: CGFloat = 15
     static let iconWidth: CGFloat = 24
+    static let cornerRadius: CGFloat = 12
+    // Opaque row color, close to the system list platter. The row must be opaque so the
+    // action color shows only in the strip the row uncovers, not through the text.
+    static let rowColor = Color(red: 0.13, green: 0.13, blue: 0.14)
     
     var body: some View {
         ZStack {
@@ -43,6 +47,9 @@ struct GroceryItemRow: View {
                 Spacer()
             }
             .padding(.vertical, 8)
+            .padding(.horizontal, 10)
+            .background(isCompleting ? Color.green : Self.rowColor)
+            .clipShape(RoundedRectangle(cornerRadius: Self.cornerRadius))
             .contentShape(Rectangle())
             // Independent Tap Gesture
             .onTapGesture {
@@ -95,9 +102,10 @@ struct GroceryItemRow: View {
                     }
             )
         }
-        .listRowBackground(
-            isCompleting ? Color.green : nil
-        )
+        .clipShape(RoundedRectangle(cornerRadius: Self.cornerRadius))
+        // The row draws its own background, so the list platter must not show behind it.
+        .listRowBackground(Color.clear)
+        .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0))
     }
 }
 
